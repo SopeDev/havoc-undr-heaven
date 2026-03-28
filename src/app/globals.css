@@ -253,7 +253,7 @@ nav {
 
 .newsletter-input {
   width: 100%;
-  background: var(--black);
+  background: #1a1a1a;
   border: 1px solid #333;
   color: #FFFFFF;
   padding: 9px 12px;
@@ -1328,26 +1328,25 @@ footer {
   display: flex;
   gap: 8px;
   align-items: center;
-  background: var(--black);
 }
 
 .breadcrumb span {
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #555;
+  color: var(--muted);
 }
 
 .breadcrumb a {
-  color: #555;
+  color: inherit;
 }
 
 .breadcrumb .sep {
-  color: #333;
+  color: var(--border);
 }
 
 .breadcrumb .current {
-  color: var(--white);
+  color: var(--text);
   font-weight: 600;
 }
 

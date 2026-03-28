@@ -29,8 +29,25 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deploy (live URL on every push)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This app is meant to deploy with **[Vercel](https://vercel.com)** connected to **GitHub**. After you connect the repo, Vercel gives you a production URL for `main` and **preview URLs** for branches and pull requests (the Vercel bot comments on PRs with the link).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### One-time setup
+
+1. Push this repository to GitHub (if it is not already).
+2. In [Vercel](https://vercel.com/new), choose **Import** → your GitHub repo **`havoc-undr-heaven`** (or whichever repo contains this project).
+3. **Framework preset:** Next.js (auto-detected).
+4. **Root directory:** leave as `.` if `package.json` is at the repo root. If the Next app lives in a subfolder in that remote, set **Root Directory** to that folder (e.g. `web`).
+5. **Build command:** `npm run build` (default). **Output:** Next.js default (no static export).
+6. Install the **Vercel** GitHub app when prompted so checks and deployment comments appear on commits and PRs.
+7. Deploy. Copy the **Production** domain from the Vercel project; future pushes to `main` update it automatically.
+
+### CI on GitHub
+
+The workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs `lint` and `build` on pushes and PRs to `main`/`master` so broken builds are caught before or alongside deploy.
+
+### Further reading
+
+- [Next.js deployment](https://nextjs.org/docs/app/building-your-application/deploying)
+- [Vercel + GitHub](https://vercel.com/docs/deployments/git/vercel-for-github)
