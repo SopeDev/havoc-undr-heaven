@@ -5,64 +5,79 @@ import SiteFooter from '../../../components/SiteFooter/SiteFooter'
 import NewsletterSignup from '../../../components/NewsletterSignup/NewsletterSignup'
 import {
   CATEGORY_DATA,
-  CATEGORIA_TOPIC_FILTERS,
   FOCO_ROWS,
   SIDEBAR_ANALYSIS,
-  VALID_CATEGORY_SLUGS,
-  VALID_TEMA_SLUGS,
-  temaLabelFromSlug
+  VALID_CATEGORY_SLUGS
 } from '../categoriaMockData'
 import { fetchArticlesByCategorySlug, fetchCategoryBySlug } from '../../../lib/sanity/articles'
 import { isSanityConfigured } from '../../../lib/sanity/client'
 import { mergeCategoriaPage } from '../../../lib/sanity/categoriaPageData'
+import { fetchNavLists } from '../../../lib/sanity/navigation'
 
 export const revalidate = 60
 
 export async function generateMetadata({ params }) {
   const { categoria } = await params
-  if (!VALID_CATEGORY_SLUGS.includes(categoria)) {
-    return { title: 'Categoría — HAVOC UNDR HEAVEN' }
-  }
-  const mock = CATEGORY_DATA[categoria]
-  let title = mock.title
-  let description = mock.desc
+  let title = 'Categoría'
+  let description = ''
+
   if (isSanityConfigured()) {
     const c = await fetchCategoryBySlug(categoria)
     if (c?.name) title = c.name
     if (c?.description) description = c.description
   }
+
+  if (title === 'Categoría') {
+    const mock = CATEGORY_DATA[categoria]
+    if (mock) {
+      title = mock.title
+      description = mock.desc
+    }
+  }
+
   return {
     title: `${title} — HAVOC UNDR HEAVEN`,
-    description: description.length > 160 ? `${description.slice(0, 157)}…` : description
+    description: description && description.length > 160 ? `${description.slice(0, 157)}…` : description || undefined
   }
 }
 
-function resolveTemaSlug(raw) {
+function parseTemaSlug(raw) {
   if (typeof raw !== 'string' || !raw.trim()) return null
-  const slug = raw.trim().toLowerCase()
-  return VALID_TEMA_SLUGS.includes(slug) ? slug : null
+  return raw.trim().toLowerCase()
 }
 
 export default async function CategoriaPage({ params, searchParams }) {
   const { categoria: key } = await params
   const sp = await searchParams
-  const temaSlug = resolveTemaSlug(Array.isArray(sp?.tema) ? sp.tema[0] : sp?.tema)
-  const tagFilterActive = Boolean(temaSlug)
-  const temaLabel = temaSlug ? temaLabelFromSlug(temaSlug) : null
+  const rawTema = parseTemaSlug(Array.isArray(sp?.tema) ? sp.tema[0] : sp?.tema)
 
-  if (!VALID_CATEGORY_SLUGS.includes(key)) {
+  const sanityOn = isSanityConfigured()
+
+  let sanityCategory = null
+  let sanityArticles = []
+  let nav = { categories: [], tags: [] }
+
+  if (sanityOn) {
+    ;[sanityCategory, sanityArticles, nav] = await Promise.all([
+      fetchCategoryBySlug(key),
+      fetchArticlesByCategorySlug(key, rawTema ? { tagSlug: rawTema } : {}),
+      fetchNavLists()
+    ])
+  }
+
+  const validCategorySlugs = nav.categories.length > 0
+    ? nav.categories.map(c => c.slug)
+    : VALID_CATEGORY_SLUGS
+
+  if (!validCategorySlugs.includes(key)) {
     notFound()
   }
 
-  const sanityOn = isSanityConfigured()
-  let sanityCategory = null
-  let sanityArticles = []
-  if (sanityOn) {
-    ;[sanityCategory, sanityArticles] = await Promise.all([
-      fetchCategoryBySlug(key),
-      fetchArticlesByCategorySlug(key, temaSlug ? { tagSlug: temaSlug } : {})
-    ])
-  }
+  const temaSlug = rawTema && nav.tags.some(t => t.slug === rawTema) ? rawTema : rawTema
+  const tagFilterActive = Boolean(temaSlug)
+  const temaLabel = temaSlug
+    ? (nav.tags.find(t => t.slug === temaSlug)?.name || null)
+    : null
 
   const data = mergeCategoriaPage(key, sanityCategory, sanityArticles, {
     tagFilterActive,
@@ -87,21 +102,15 @@ export default async function CategoriaPage({ params, searchParams }) {
         <Link href='/' className='section-tab' aria-label='Todo'>
           Todo
         </Link>
-        <Link href='/categoria/analisis' className={key === 'analisis' ? 'section-tab active' : 'section-tab'}>
-          Análisis
-        </Link>
-        <Link href='/categoria/reflexion' className={key === 'reflexion' ? 'section-tab active' : 'section-tab'}>
-          Reflexión
-        </Link>
-        <Link
-          href='/categoria/newsletter'
-          className={key === 'newsletter' ? 'section-tab active' : 'section-tab'}
-        >
-          Newsletter
-        </Link>
-        <Link href='/categoria/redes' className={key === 'redes' ? 'section-tab active' : 'section-tab'}>
-          Redes
-        </Link>
+        {nav.categories.map(c => (
+          <Link
+            key={c.slug}
+            href={`/categoria/${c.slug}`}
+            className={key === c.slug ? 'section-tab active' : 'section-tab'}
+          >
+            {c.name}
+          </Link>
+        ))}
         <Link href='/focos' className='section-tab'>
           Focos de Tensión
         </Link>
@@ -137,14 +146,14 @@ export default async function CategoriaPage({ params, searchParams }) {
         >
           Todos
         </Link>
-        {CATEGORIA_TOPIC_FILTERS.map(({ slug, label }) => (
+        {nav.tags.map(t => (
           <Link
-            key={slug}
-            href={`/categoria/${key}?tema=${slug}`}
-            className={temaSlug === slug ? 'topic-pill active' : 'topic-pill'}
+            key={t.slug}
+            href={`/categoria/${key}?tema=${t.slug}`}
+            className={temaSlug === t.slug ? 'topic-pill active' : 'topic-pill'}
             scroll={false}
           >
-            {label}
+            {t.name}
           </Link>
         ))}
       </div>

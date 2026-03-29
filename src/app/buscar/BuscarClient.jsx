@@ -134,16 +134,14 @@ const scoreArticle = (a, q) => {
   return score
 }
 
-const matchesCategoryFilter = (a, currentFilter) => {
+const matchesCategoryFilter = (a, currentFilter, categoryList) => {
   if (currentFilter === 'todo') return true
-  if (currentFilter === 'analisis') return a.cat === 'Análisis'
-  if (currentFilter === 'reflexion') return a.cat === 'Reflexión'
-  if (currentFilter === 'newsletter') return a.cat === 'Newsletter'
-  if (currentFilter === 'redes') return a.cat === 'Redes'
+  const match = categoryList.find(c => c.slug === currentFilter)
+  if (match) return a.cat === match.name
   return true
 }
 
-export default function BuscarClient({ cmsArticles = [] }) {
+export default function BuscarClient({ cmsArticles = [], categories = [], tags = [] }) {
   const router = useRouter()
   const params = useSearchParams()
 
@@ -167,7 +165,7 @@ export default function BuscarClient({ cmsArticles = [] }) {
   const results = useMemo(() => {
     const q = query.trim()
     let filtered = pool.filter(a => {
-      if (!matchesCategoryFilter(a, currentFilter)) return false
+      if (!matchesCategoryFilter(a, currentFilter, categories)) return false
       if (!q) return true
       return scoreArticle(a, q) > 0
     })
@@ -177,7 +175,7 @@ export default function BuscarClient({ cmsArticles = [] }) {
     else if (q) filtered.sort((a, b) => scoreArticle(b, q) - scoreArticle(a, q))
 
     return filtered
-  }, [currentFilter, currentSort, query, pool])
+  }, [currentFilter, currentSort, query, pool, categories])
 
   const goToQuery = nextQ => {
     const clean = nextQ.trim()
@@ -243,30 +241,17 @@ export default function BuscarClient({ cmsArticles = [] }) {
             >
               Todo
             </div>
-            <div
-              className={currentFilter === 'analisis' ? 'sf active' : 'sf'}
-              role='button'
-              tabIndex={0}
-              onClick={() => setCurrentFilter('analisis')}
-            >
-              Análisis
-            </div>
-            <div
-              className={currentFilter === 'reflexion' ? 'sf active' : 'sf'}
-              role='button'
-              tabIndex={0}
-              onClick={() => setCurrentFilter('reflexion')}
-            >
-              Reflexión
-            </div>
-            <div
-              className={currentFilter === 'newsletter' ? 'sf active' : 'sf'}
-              role='button'
-              tabIndex={0}
-              onClick={() => setCurrentFilter('newsletter')}
-            >
-              Newsletter
-            </div>
+            {categories.map(c => (
+              <div
+                key={c.slug}
+                className={currentFilter === c.slug ? 'sf active' : 'sf'}
+                role='button'
+                tabIndex={0}
+                onClick={() => setCurrentFilter(c.slug)}
+              >
+                {c.name}
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -425,39 +410,18 @@ export default function BuscarClient({ cmsArticles = [] }) {
             <NewsletterSignup />
           </div>
 
-          <div className='sidebar-block'>
-            <div className='sidebar-label'>Explorar por Tema</div>
-            <div className='tema-pill-grid'>
-              {[
-                'china',
-                'estados-unidos',
-                'rusia',
-                'asia-pacifico',
-                'medio-oriente',
-                'america-latina',
-                'europa',
-                'brics',
-                'mexico',
-                'geoeconomia',
-                'tecnologia',
-                'energia'
-              ].map(slug => {
-                const label = slug
-                  .replace(/-/g, ' ')
-                  .replace('estados unidos', 'Estados Unidos')
-                  .replace('asia pacifico', 'Asia-Pacífico')
-                  .replace('medio oriente', 'Medio Oriente')
-                  .replace('america latina', 'América Latina')
-                  .replace('geoeconomia', 'Geoeconomía')
-                  .replace('energia', 'Energía')
-                return (
-                  <a key={slug} href={`/temas/${slug}`} className='tema-pill'>
-                    {label}
+          {tags.length > 0 && (
+            <div className='sidebar-block'>
+              <div className='sidebar-label'>Explorar por Tema</div>
+              <div className='tema-pill-grid'>
+                {tags.map(t => (
+                  <a key={t.slug} href={`/temas/${t.slug}`} className='tema-pill'>
+                    {t.name}
                   </a>
-                )
-              })}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </aside>
       </div>
 

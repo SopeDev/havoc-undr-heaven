@@ -180,6 +180,20 @@ export const focosByTagSlugQuery = groq`
   }
 `
 
+export const allCategoriesQuery = groq`
+  *[_type == "category" && defined(slug.current)] | order(name asc) {
+    name,
+    "slug": slug.current
+  }
+`
+
+export const allTagsQuery = groq`
+  *[_type == "tag" && defined(slug.current)] | order(name asc) {
+    name,
+    "slug": slug.current
+  }
+`
+
 /** Articles that share at least one tag with the foco ($tagRefs = array of tag document _id) */
 export const articlesForFocoTagsQuery = groq`
   *[_type == "article" && defined(slug.current) && defined(tags[@._ref in $tagRefs][0])] | order(publishedAt desc) {

@@ -4,37 +4,9 @@ import SiteFooter from '../../../components/SiteFooter/SiteFooter'
 import NewsletterSignup from '../../../components/NewsletterSignup/NewsletterSignup'
 import { isSanityConfigured } from '../../../lib/sanity/client'
 import { fetchTemaPageData } from '../../../lib/sanity/temas'
+import { fetchNavLists } from '../../../lib/sanity/navigation'
 
 export const revalidate = 60
-
-const TOP_TYPE_ITEMS = [
-  { href: '/', label: 'Todo', activeKey: 'todo' },
-  { href: '/categoria/analisis', label: 'Análisis', activeKey: 'analisis' },
-  { href: '/categoria/reflexion', label: 'Reflexión', activeKey: 'reflexion' },
-  { href: '/categoria/newsletter', label: 'Newsletter', activeKey: 'newsletter' },
-  { href: '/focos', label: 'Focos de Tensión', activeKey: 'focos' },
-  { href: '/tablero', label: 'Tablero Global', activeKey: 'tablero' }
-]
-
-const REGION_ITEMS = [
-  { slug: 'china', label: 'China' },
-  { slug: 'estados-unidos', label: 'Estados Unidos' },
-  { slug: 'rusia', label: 'Rusia' },
-  { slug: 'asia-pacifico', label: 'Asia-Pacífico' },
-  { slug: 'medio-oriente', label: 'Medio Oriente' },
-  { slug: 'america-latina', label: 'América Latina' },
-  { slug: 'europa', label: 'Europa y Occidente' },
-  { slug: 'brics', label: 'BRICS' },
-  { slug: 'mexico', label: 'México' },
-  { slug: 'geoeconomia', label: 'Geoeconomía' },
-  { slug: 'seguridad', label: 'Seguridad' },
-  { slug: 'tecnologia', label: 'Tecnología' },
-  { slug: 'energia', label: 'Energía y Medio Ambiente' },
-  { slug: 'comercio', label: 'Comercio' },
-  { slug: 'gobierno', label: 'Gobierno' },
-  { slug: 'diplomacia', label: 'Relaciones Internacionales y Diplomacia' },
-  { slug: 'mundo', label: 'Mundo' }
-]
 
 const FALLBACK = {
   label: 'Mundo',
@@ -102,24 +74,21 @@ const THEMES = {
   mundo: FALLBACK
 }
 
-const FEED_CATEGORY_FILTERS = [
-  { key: 'todo', label: 'Todo', href: slug => `/temas/${slug}` },
-  { key: 'analisis', label: 'Análisis', href: slug => `/categoria/analisis?tema=${slug}` },
-  { key: 'reflexion', label: 'Reflexión', href: slug => `/categoria/reflexion?tema=${slug}` },
-  { key: 'newsletter', label: 'Newsletter', href: slug => `/categoria/newsletter?tema=${slug}` }
-]
-
 async function resolveTema(temaSlug) {
   if (isSanityConfigured()) {
-    const cms = await fetchTemaPageData(temaSlug)
-    if (cms) return cms
+    const [cms, nav] = await Promise.all([
+      fetchTemaPageData(temaSlug),
+      fetchNavLists()
+    ])
+    if (cms) return { tema: cms, nav }
+    return { tema: THEMES[temaSlug] || FALLBACK, nav }
   }
-  return THEMES[temaSlug] || FALLBACK
+  return { tema: THEMES[temaSlug] || FALLBACK, nav: { categories: [], tags: [] } }
 }
 
 export async function generateMetadata({ params }) {
   const { tema: temaSlug } = await params
-  const tema = await resolveTema(temaSlug)
+  const { tema } = await resolveTema(temaSlug)
   const title = `${tema.label} — HAVOC UNDR HEAVEN`
   const desc = tema.desc || undefined
   return {
@@ -130,7 +99,7 @@ export async function generateMetadata({ params }) {
 
 export default async function TemaPage({ params }) {
   const { tema: temaSlug } = await params
-  const tema = await resolveTema(temaSlug)
+  const { tema, nav } = await resolveTema(temaSlug)
 
   const hasHero = tema.hero !== null && tema.hero !== undefined
   const hasArticles = tema.articles.length > 0
@@ -148,22 +117,25 @@ export default async function TemaPage({ params }) {
       </div>
 
       <div className='type-bar'>
-        {TOP_TYPE_ITEMS.map(item => (
-          <Link key={item.activeKey} href={item.href} className='type-item'>
-            {item.label}
+        <Link href='/' className='type-item'>Todo</Link>
+        {nav.categories.map(c => (
+          <Link key={c.slug} href={`/categoria/${c.slug}`} className='type-item'>
+            {c.name}
           </Link>
         ))}
+        <Link href='/focos' className='type-item'>Focos de Tensión</Link>
+        <Link href='/tablero' className='type-item'>Tablero Global</Link>
       </div>
 
       <div className='region-bar'>
         <span className='region-item'>Temas</span>
-        {REGION_ITEMS.map(item => (
+        {nav.tags.map(t => (
           <Link
-            key={item.slug}
-            href={`/temas/${item.slug}`}
-            className={item.slug === temaSlug ? 'region-item active' : 'region-item'}
+            key={t.slug}
+            href={`/temas/${t.slug}`}
+            className={t.slug === temaSlug ? 'region-item active' : 'region-item'}
           >
-            {item.label}
+            {t.name}
           </Link>
         ))}
       </div>
@@ -203,14 +175,21 @@ export default async function TemaPage({ params }) {
       <div className='tema-body'>
         <div className='tema-feed'>
           <div className='feed-filter-row'>
-            {FEED_CATEGORY_FILTERS.map(f => (
+            <Link
+              href={`/temas/${temaSlug}`}
+              className='feed-filter active'
+              scroll={false}
+            >
+              Todo
+            </Link>
+            {nav.categories.map(c => (
               <Link
-                key={f.key}
-                href={f.href(temaSlug || 'mundo')}
-                className={f.key === 'todo' ? 'feed-filter active' : 'feed-filter'}
+                key={c.slug}
+                href={`/categoria/${c.slug}?tema=${temaSlug}`}
+                className='feed-filter'
                 scroll={false}
               >
-                {f.label}
+                {c.name}
               </Link>
             ))}
           </div>
