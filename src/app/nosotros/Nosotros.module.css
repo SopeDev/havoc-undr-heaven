@@ -421,3 +421,248 @@
   text-transform: uppercase;
   margin-top: 14px;
 }
+
+@media (max-width: 1024px) {
+  .opening {
+    padding: 72px 24px;
+  }
+
+  .openingEyebrow {
+    margin-bottom: 24px;
+  }
+
+  .openingTitle {
+    margin-bottom: 32px;
+  }
+
+  .maoBlock {
+    margin-top: 36px;
+  }
+
+  .hero {
+    height: 400px;
+  }
+
+  .heroCaption {
+    right: 24px;
+    bottom: 20px;
+  }
+
+  .missionInner {
+    padding: 56px 24px;
+  }
+
+  .sectionTitle {
+    font-size: 44px;
+    letter-spacing: 2px;
+    margin-bottom: 22px;
+  }
+
+  .missionStatement {
+    font-size: 18px;
+  }
+
+  .coverageInner {
+    padding: 56px 24px;
+  }
+
+  .coverageHeader {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    margin-bottom: 36px;
+  }
+
+  .coverageIntro {
+    padding-top: 0;
+  }
+
+  .coverageGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Override desktop 4-col “last row” so only the true last 2-col row drops bottom border */
+  .coverageItem:nth-last-child(-n + 4) {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .coverageItem:nth-child(2n) {
+    border-right: none;
+  }
+
+  .coverageItem:nth-last-child(-n + 2) {
+    border-bottom: none;
+  }
+
+  .differentInner {
+    padding: 56px 24px;
+  }
+
+  .closingPhilosophy {
+    padding: 64px 24px;
+  }
+
+  .cta {
+    padding: 64px 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .opening {
+    padding: 48px 16px 56px;
+  }
+
+  .openingEyebrow {
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+  }
+
+  .openingTitle {
+    margin-bottom: 24px;
+    letter-spacing: 2px;
+  }
+
+  .openingStatement {
+    text-align: left;
+  }
+
+  .maoLine {
+    letter-spacing: 2px;
+  }
+
+  .maoBlock {
+    margin-top: 28px;
+  }
+
+  .hero {
+    height: min(52vw, 280px);
+    min-height: 220px;
+  }
+
+  .heroCaption {
+    right: 16px;
+    bottom: 14px;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+  }
+
+  .missionInner {
+    padding: 40px 16px;
+  }
+
+  .sectionEyebrow {
+    letter-spacing: 3px;
+  }
+
+  .sectionTitle {
+    font-size: 32px;
+    letter-spacing: 1.5px;
+    margin-bottom: 18px;
+  }
+
+  .missionStatement {
+    font-size: 17px;
+    padding-left: 16px;
+    text-align: left;
+  }
+
+  .missionBody p {
+    text-align: left;
+  }
+
+  .editorialQuote {
+    padding: 22px 18px;
+    margin-top: 24px;
+  }
+
+  .editorialQuoteText {
+    font-size: 16px;
+  }
+
+  .coverageInner {
+    padding: 40px 16px;
+  }
+
+  .coverageHeader {
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+
+  .coverageIntro p {
+    text-align: left;
+  }
+
+  .coverageGrid {
+    grid-template-columns: 1fr;
+    border: 1px solid var(--border);
+  }
+
+  .coverageItem {
+    padding: 20px 16px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .coverageItem:nth-last-child(-n + 4) {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .coverageItem:last-child {
+    border-bottom: none;
+  }
+
+  .coverageIcon {
+    font-size: 28px;
+  }
+
+  .differentInner {
+    padding: 40px 16px;
+  }
+
+  .valuesList {
+    margin-top: 28px;
+  }
+
+  .valueRow {
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px 0;
+  }
+
+  .valueNum {
+    font-size: 24px;
+  }
+
+  .valueTitle {
+    font-size: 11px;
+  }
+
+  .closingPhilosophy {
+    padding: 48px 16px;
+  }
+
+  .cta {
+    padding: 48px 16px;
+  }
+
+  .cta :global(form) {
+    flex-direction: column;
+    align-items: stretch;
+    max-width: none;
+  }
+
+  .cta :global(.newsletter-input) {
+    border-right: 1px solid #2a2a2a;
+    margin-bottom: 0;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .cta :global(.newsletter-btn) {
+    width: 100%;
+  }
+
+  .ctaSub {
+    font-size: 15px;
+    margin-bottom: 28px;
+  }
+}

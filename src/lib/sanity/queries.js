@@ -91,3 +91,71 @@ export const articlesByCategorySlugAndTagSlugQuery = groq`
     "tagNames": tags[]->name
   }
 `
+
+export const focosIndexListQuery = groq`
+  *[_type == "foco" && defined(slug.current)] {
+    title,
+    "slug": slug.current,
+    titleLines,
+    status,
+    statusLabel,
+    regionLineOverride,
+    summary,
+    updatedAt,
+    featured,
+    sortOrder,
+    "tagNames": tags[]->name,
+    "tagIds": tags[]._ref
+  } | order(featured desc, sortOrder asc, title asc)
+`
+
+/** Minimal rows to count articles per foco tag set on the client */
+export const articlesTagRefsQuery = groq`
+  *[_type == "article" && defined(slug.current)] {
+    "tagRefs": tags[]._ref
+  }
+`
+
+export const focoBySlugQuery = groq`
+  *[_type == "foco" && slug.current == $slug][0]{
+    title,
+    "slug": slug.current,
+    titleLines,
+    status,
+    statusLabel,
+    regionLineOverride,
+    summary,
+    updatedAt,
+    "tagIds": tags[]._ref,
+    "tagNames": tags[]->name,
+    actors,
+    tensionIndicators,
+    keyFigures,
+    signalQuote,
+    timeline,
+    "contextPortable": context,
+    contextReadings,
+    "relatedFocos": relatedFocos[]->{
+      title,
+      "slug": slug.current,
+      titleLines,
+      status,
+      regionLineOverride,
+      summary,
+      "tagNames": tags[]->name
+    }
+  }
+`
+
+/** Articles that share at least one tag with the foco ($tagRefs = array of tag document _id) */
+export const articlesForFocoTagsQuery = groq`
+  *[_type == "article" && defined(slug.current) && defined(tags[@._ref in $tagRefs][0])] | order(publishedAt desc) {
+    title,
+    "slug": slug.current,
+    deck,
+    publishedAt,
+    readingTimeMinutes,
+    isNewsletterEdition,
+    "categoryName": category->name
+  }
+`

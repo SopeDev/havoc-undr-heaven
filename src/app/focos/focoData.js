@@ -87,7 +87,7 @@ function minimalFoco(slug, partial) {
         name: 'Actores regionales',
         role: 'Posturas y coaliciones en redefinición; detalle al conectar CMS.',
         stanceClass: 'stance-observador',
-        stanceLabel: 'Postura: En evolución'
+        stanceLabel: 'Postura: Observador activo'
       }
     ],
     indicators: partial.indicators || [
@@ -141,7 +141,7 @@ export const FOCOS_BY_SLUG = {
         name: 'Japón · Australia',
         role: 'Aliados regionales con interés vital en estabilidad del estrecho. Aumentan capacidad de defensa propia.',
         stanceClass: 'stance-observador',
-        stanceLabel: 'Postura: Observadores activos'
+        stanceLabel: 'Postura: Observador activo'
       }
     ],
     indicators: [
@@ -280,19 +280,19 @@ export const FOCOS_BY_SLUG = {
         name: 'Rusia',
         role: 'Objetivos estratégicos en la frontera y órbita post-soviética; uso de fuerza y líneas diplomáticas paralelas.',
         stanceClass: 'stance-agresivo',
-        stanceLabel: 'Postura: Coercitiva'
+        stanceLabel: 'Postura: Asertivo'
       },
       {
         name: 'Ucrania',
         role: 'Defensa territorial y afiliación política occidental; dependencia de apoyo exterior sostenido.',
         stanceClass: 'stance-defensivo',
-        stanceLabel: 'Postura: Defensiva'
+        stanceLabel: 'Postura: Defensivo'
       },
       {
         name: 'OTAN / UE',
         role: 'Sanciones, asistencia militar y contención del escalado sistémico; tensiones internas sobre el horizonte.',
         stanceClass: 'stance-ambiguo',
-        stanceLabel: 'Postura: Condicional'
+        stanceLabel: 'Postura: Ambiguo'
       }
     ],
     related: [
@@ -425,3 +425,46 @@ export const FOCO_INDEX_CARDS = [
   { slug: 'expansion-brics', kind: 'cold', label: 'Latente', articleCount: 2 },
   { slug: 'corea-del-norte-apertura-controlada', kind: 'cold', label: 'Latente', articleCount: 1 }
 ]
+
+/** Same card shape as Sanity index cards — for fallback when CMS has no foco documents. */
+export function buildMockFocosIndexCards() {
+  return FOCO_INDEX_CARDS.map(c => {
+    const data = getFocoBySlug(c.slug)
+    if (!data) return null
+    return {
+      slug: c.slug,
+      kind: c.kind,
+      label: c.label,
+      titleLines: data.titleLines,
+      regionLine: data.regionLine,
+      summary: data.summary,
+      updated: data.updated,
+      articleCount: c.articleCount,
+      featured: c.slug === FOCO_FEATURED_SLUG
+    }
+  }).filter(Boolean)
+}
+
+/**
+ * Featured hero may use FOCO_FEATURED_SLUG even when that foco is not in the grid list (static mock layout).
+ * @param {ReturnType<typeof buildMockFocosIndexCards>} cards
+ */
+export function resolveMockFeaturedIndexCard(cards) {
+  if (!cards?.length) return null
+  const inGrid = cards.find(c => c.slug === FOCO_FEATURED_SLUG)
+  if (inGrid) return inGrid
+  const data = getFocoBySlug(FOCO_FEATURED_SLUG)
+  if (!data) return cards[0]
+  const kind = data.status === 'hot' ? 'hot' : data.status === 'cold' ? 'cold' : 'warm'
+  return {
+    slug: data.slug,
+    kind,
+    label: data.statusLabel,
+    titleLines: data.titleLines,
+    regionLine: data.regionLine,
+    summary: data.summary,
+    updated: data.updated,
+    articleCount: data.articleCount,
+    featured: true
+  }
+}

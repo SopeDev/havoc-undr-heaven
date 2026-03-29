@@ -7,11 +7,18 @@ const STATUS_OPTIONS = [
 ]
 
 const STANCE_OPTIONS = [
-  { title: 'Asertivo / coercitivo', value: 'aggressive' },
+  { title: 'Asertivo', value: 'aggressive' },
   { title: 'Defensivo', value: 'defensive' },
-  { title: 'Ambiguo / condicional', value: 'ambiguous' },
+  { title: 'Ambiguo', value: 'ambiguous' },
   { title: 'Observador activo', value: 'observer' }
 ]
+
+const STANCE_PREVIEW_SUBTITLE = {
+  aggressive: 'Asertivo',
+  defensive: 'Defensivo',
+  ambiguous: 'Ambiguo',
+  observer: 'Observador activo'
+}
 
 const LEVEL_OPTIONS = [
   { title: 'Alta', value: 'high' },
@@ -31,16 +38,19 @@ export default defineType({
   type: 'document',
   fields: [
     defineField({
+      name: 'title',
+      title: 'Título',
+      description: 'Nombre del foco.',
+      type: 'string',
+      validation: Rule => Rule.required()
+    }),
+    defineField({
       name: 'slug',
       title: 'Slug',
       type: 'slug',
       options: {
         maxLength: 96,
-        source: doc => {
-          const lines = doc?.titleLines
-          if (!Array.isArray(lines)) return ''
-          return lines.filter(Boolean).join(' ').trim()
-        }
+        source: doc => (typeof doc?.title === 'string' ? doc.title : '')
       },
       validation: Rule => Rule.required()
     }),
@@ -60,11 +70,11 @@ export default defineType({
     }),
     defineField({
       name: 'titleLines',
-      title: 'Título (líneas)',
-      description: 'Cada ítem es una línea del titular en la página del foco.',
+      title: 'Título en el hero (líneas opcionales)',
+      description:
+        'Si lo completás, cada ítem es una línea del titular grande (como en el mock). Si está vacío, el sitio puede mostrar solo el campo Título.',
       type: 'array',
-      of: [{ type: 'string' }],
-      validation: Rule => Rule.min(1)
+      of: [{ type: 'string' }]
     }),
     defineField({
       name: 'tags',
@@ -107,22 +117,19 @@ export default defineType({
             defineField({ name: 'role', title: 'Rol / descripción', type: 'text', rows: 3 }),
             defineField({
               name: 'stance',
-              title: 'Postura (estilo)',
+              title: 'Postura',
               type: 'string',
               options: { list: STANCE_OPTIONS, layout: 'radio' },
-              initialValue: 'observer'
-            }),
-            defineField({
-              name: 'stanceLabel',
-              title: 'Texto de postura',
-              description: 'Ej. Postura: Asertivo. Si está vacío, el sitio usa un texto por defecto según la postura.',
-              type: 'string'
+              initialValue: 'observer',
+              validation: Rule => Rule.required()
             })
           ],
           preview: {
             select: { name: 'name', stance: 'stance' },
             prepare({ name, stance }) {
-              return { title: name || 'Actor', subtitle: stance }
+              const sub =
+                stance && STANCE_PREVIEW_SUBTITLE[stance] ? STANCE_PREVIEW_SUBTITLE[stance] : stance || ''
+              return { title: name || 'Actor', subtitle: sub }
             }
           }
         })
@@ -138,19 +145,22 @@ export default defineType({
           name: 'focoIndicator',
           fields: [
             defineField({ name: 'label', title: 'Indicador', type: 'string', validation: Rule => Rule.required() }),
-            defineField({ name: 'value', title: 'Valor (texto)', type: 'string', validation: Rule => Rule.required() }),
             defineField({
               name: 'level',
-              title: 'Nivel (color)',
+              title: 'Nivel',
+              description: 'Se muestra en el sitio como Alta, Media o Baja con el color correspondiente.',
               type: 'string',
               options: { list: LEVEL_OPTIONS, layout: 'radio' },
-              initialValue: 'med'
+              initialValue: 'med',
+              validation: Rule => Rule.required()
             })
           ],
           preview: {
-            select: { label: 'label', value: 'value' },
-            prepare({ label, value }) {
-              return { title: label, subtitle: value }
+            select: { label: 'label', level: 'level' },
+            prepare({ label, level }) {
+              const sub =
+                level === 'high' ? 'Alta' : level === 'low' ? 'Baja' : level === 'med' ? 'Media' : '—'
+              return { title: label || 'Indicador', subtitle: sub }
             }
           }
         })
@@ -283,21 +293,20 @@ export default defineType({
   ],
   preview: {
     select: {
-      lines: 'titleLines',
+      title: 'title',
       slug: 'slug.current',
       status: 'status'
     },
-    prepare({ lines, slug, status }) {
-      const title =
-        Array.isArray(lines) && lines.length ? lines.filter(Boolean).join(' ') : 'Foco'
+    prepare({ title, slug, status }) {
       const st = status === 'hot' ? 'Activo' : status === 'cold' ? 'Latente' : 'Tensión elevada'
       return {
-        title,
+        title: title?.trim() || 'Foco',
         subtitle: slug ? `${slug} · ${st}` : st
       }
     }
   },
   orderings: [
+    { title: 'Título A→Z', name: 'titleAsc', by: [{ field: 'title', direction: 'asc' }] },
     { title: 'Orden manual', name: 'sortOrderAsc', by: [{ field: 'sortOrder', direction: 'asc' }] },
     { title: 'Actualizado', name: 'updatedAtDesc', by: [{ field: 'updatedAt', direction: 'desc' }] }
   ]

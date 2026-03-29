@@ -2,9 +2,52 @@ import Link from 'next/link'
 import SiteHeader from '../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../components/SiteFooter/SiteFooter'
 import FocosIndexClient from './FocosIndexClient'
-import { FOCO_FEATURED_SLUG, FOCO_INDEX_CARDS } from './focoData'
+import { buildMockFocosIndexCards, resolveMockFeaturedIndexCard } from './focoData'
+import { isSanityConfigured } from '../../lib/sanity/client'
+import { fetchFocosIndexData, pickFeaturedIndexCard } from '../../lib/sanity/focos'
 
-export default function FocosPage() {
+export const revalidate = 60
+
+function statsFromCards(cards, lastUpdatedLabel) {
+  if (!cards?.length) {
+    return {
+      total: 0,
+      hot: 0,
+      warm: 0,
+      cold: 0,
+      lastUpdatedLabel: lastUpdatedLabel ?? '—'
+    }
+  }
+  return {
+    total: cards.length,
+    hot: cards.filter(c => c.kind === 'hot').length,
+    warm: cards.filter(c => c.kind === 'warm').length,
+    cold: cards.filter(c => c.kind === 'cold').length,
+    lastUpdatedLabel: lastUpdatedLabel ?? cards[0]?.updated ?? '—'
+  }
+}
+
+export default async function FocosPage() {
+  let cards
+  let stats
+  let fromCms = false
+
+  if (isSanityConfigured()) {
+    const cms = await fetchFocosIndexData()
+    if (cms) {
+      cards = cms.cards
+      stats = cms.stats
+      fromCms = true
+    }
+  }
+
+  if (!cards?.length) {
+    cards = buildMockFocosIndexCards()
+    stats = statsFromCards(cards)
+  }
+
+  const featured = fromCms ? pickFeaturedIndexCard(cards) : resolveMockFeaturedIndexCard(cards)
+
   return (
     <div className='focos-index'>
       <SiteHeader />
@@ -51,31 +94,31 @@ export default function FocosPage() {
       <div className='stats-bar'>
         <div className='stats-bar-inner'>
           <div className='stat-item'>
-            <span className='stat-num'>9</span>
+            <span className='stat-num'>{stats.total}</span>
             <span className='stat-label'>Focos activos</span>
           </div>
           <div className='stat-item'>
-            <span className='stat-num red'>2</span>
+            <span className='stat-num red'>{stats.hot}</span>
             <span className='stat-label'>Conflicto activo</span>
           </div>
           <div className='stat-item'>
-            <span className='stat-num orange'>4</span>
+            <span className='stat-num orange'>{stats.warm}</span>
             <span className='stat-label'>Tensión elevada</span>
           </div>
           <div className='stat-item'>
-            <span className='stat-num blue'>3</span>
+            <span className='stat-num blue'>{stats.cold}</span>
             <span className='stat-label'>Latentes</span>
           </div>
           <div className='stat-item'>
             <span className='stat-num' style={{ color: '#555' }}>
-              28 Feb
+              {stats.lastUpdatedLabel}
             </span>
             <span className='stat-label'>Última actualización</span>
           </div>
         </div>
       </div>
 
-      <FocosIndexClient featuredSlug={FOCO_FEATURED_SLUG} cards={FOCO_INDEX_CARDS} />
+      <FocosIndexClient featured={featured} cards={cards} />
 
       <SiteFooter />
     </div>

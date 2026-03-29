@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import ArticleBodyPortableText from '../../components/ArticleBodyPortableText/ArticleBodyPortableText'
 
 const LAYERS = [
   { id: 'actual', label: 'Estado Actual' },
@@ -110,18 +111,24 @@ export default function FocoDetailClient({ data }) {
             <div className='layer-main'>
               <div className='section-eyebrow'>Últimos Desarrollos</div>
               <div className='timeline'>
-                {data.timeline.map((t, i) => (
-                  <div key={i} className='timeline-item'>
-                    <div className='timeline-date'>{t.date}</div>
-                    <div>
-                      <div className='timeline-title'>
-                        <span className='timeline-dot' style={{ background: t.dot }} />
-                        {t.title}
+                {data.timeline?.length > 0 ? (
+                  data.timeline.map((t, i) => (
+                    <div key={i} className='timeline-item'>
+                      <div className='timeline-date'>{t.date}</div>
+                      <div>
+                        <div className='timeline-title'>
+                          <span className='timeline-dot' style={{ background: t.dot }} />
+                          {t.title}
+                        </div>
+                        <div className='timeline-text'>{t.text}</div>
                       </div>
-                      <div className='timeline-text'>{t.text}</div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p style={{ color: 'var(--mid)', fontSize: 14 }}>
+                    Agregá entradas de línea de tiempo en Sanity para este foco.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -174,8 +181,13 @@ export default function FocoDetailClient({ data }) {
                 </button>
               ))}
             </div>
-            {archivoFiltered.map(item => (
-              <Link key={item.title} href={item.href} className='archivo-item'>
+            {archivoFiltered.length === 0 ? (
+              <p style={{ color: 'var(--mid)', fontSize: 14 }}>
+                Todavía no hay artículos enlazados por etiqueta a este foco.
+              </p>
+            ) : null}
+            {archivoFiltered.map((item, idx) => (
+              <Link key={`${item.href}-${idx}`} href={item.href} className='archivo-item'>
                 <div>
                   <span className='archivo-cat'>{item.cat}</span>
                   <div className='archivo-title'>{item.title}</div>
@@ -193,18 +205,33 @@ export default function FocoDetailClient({ data }) {
             <div className='section-eyebrow'>Contexto de Fondo — Para entender desde cero</div>
             <div className='contexto-grid'>
               <div className='contexto-main'>
-                <div className='contexto-body'>{data.contexto.paragraphs.map(renderContextoBlock)}</div>
+                <div className='contexto-body'>
+                  {data.contextPortable?.length ? (
+                    <ArticleBodyPortableText
+                      value={data.contextPortable}
+                      emptyMessage='Aún no hay bloques de contexto en el CMS para este foco.'
+                    />
+                  ) : data.contexto.paragraphs?.length > 0 ? (
+                    data.contexto.paragraphs.map(renderContextoBlock)
+                  ) : (
+                    <p style={{ color: 'var(--mid)', fontSize: 14 }}>
+                      Aún no hay contexto de fondo para este foco en el sitio.
+                    </p>
+                  )}
+                </div>
               </div>
               <div className='contexto-side'>
-                <div className='indicator-block'>
-                  <div className='indicator-label'>Lecturas Esenciales</div>
-                  {data.contexto.readings.map((r, i) => (
-                    <div key={i} className='reading-row'>
-                      <div className='reading-title'>{r.title}</div>
-                      <div className='reading-sub'>{r.subtitle}</div>
-                    </div>
-                  ))}
-                </div>
+                {data.contexto.readings?.length > 0 ? (
+                  <div className='indicator-block'>
+                    <div className='indicator-label'>Lecturas Esenciales</div>
+                    {data.contexto.readings.map((r, i) => (
+                      <div key={i} className='reading-row'>
+                        <div className='reading-title'>{r.title}</div>
+                        <div className='reading-sub'>{r.subtitle}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

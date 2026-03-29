@@ -53,9 +53,13 @@ const components = {
   }
 }
 
-export default function ArticleBodyPortableText({ value }) {
+export default function ArticleBodyPortableText({ value, emptyMessage }) {
   if (!value || !Array.isArray(value) || value.length === 0) {
-    return <p className='article-body-empty'>Este artículo aún no tiene cuerpo en el CMS.</p>
+    return (
+      <p className='article-body-empty'>
+        {emptyMessage || 'Este artículo aún no tiene cuerpo en el CMS.'}
+      </p>
+    )
   }
   return <PortableText value={value} components={components} />
 }

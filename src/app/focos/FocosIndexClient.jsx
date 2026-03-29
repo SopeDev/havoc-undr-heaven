@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { getFocoBySlug } from './focoData'
 
 const FILTERS = [
   { id: 'todos', label: 'Todos' },
@@ -19,21 +18,19 @@ function matchesFilter(filterId, kind) {
   return true
 }
 
-export default function FocosIndexClient({ featuredSlug, cards }) {
+export default function FocosIndexClient({ featured, cards }) {
   const [filter, setFilter] = useState('todos')
-
-  const featured = useMemo(() => getFocoBySlug(featuredSlug), [featuredSlug])
 
   const visibleCards = useMemo(
     () => cards.filter(c => matchesFilter(filter, c.kind)),
     [cards, filter]
   )
 
-  const showFeatured = featured && matchesFilter(filter, featured.status === 'hot' ? 'hot' : featured.status === 'cold' ? 'cold' : 'warm')
+  const showFeatured = featured && matchesFilter(filter, featured.kind)
 
   const regionShort = featured?.regionLine?.split('·')[0]?.trim() || ''
 
-  if (!featured) return null
+  if (!featured || !cards?.length) return null
 
   return (
     <>
@@ -62,12 +59,8 @@ export default function FocosIndexClient({ featuredSlug, cards }) {
           <Link href={`/focos/${featured.slug}`} className='foco-featured'>
             <div className='foco-featured-visual'>
               <div className='foco-featured-status'>
-                <div className={`fdot ${featured.status === 'hot' ? 'hot' : featured.status === 'cold' ? 'cold' : 'warm'}`} />
-                <span
-                  className={`fdot-label ${featured.status === 'hot' ? 'hot' : featured.status === 'cold' ? 'cold' : 'warm'}`}
-                >
-                  {featured.statusLabel}
-                </span>
+                <div className={`fdot ${featured.kind}`} />
+                <span className={`fdot-label ${featured.kind}`}>{featured.label}</span>
               </div>
               <div>
                 <div className='foco-featured-name'>
@@ -106,10 +99,7 @@ export default function FocosIndexClient({ featuredSlug, cards }) {
 
         <div className='focos-grid-label'>Todos los Focos</div>
         <div className='focos-grid'>
-          {visibleCards.map(card => {
-            const data = getFocoBySlug(card.slug)
-            if (!data) return null
-            return (
+          {visibleCards.map(card => (
               <Link key={card.slug} href={`/focos/${card.slug}`} className='foco-card-link'>
                 <div className='foco-card'>
                   <div className='foco-card-top'>
@@ -120,11 +110,11 @@ export default function FocosIndexClient({ featuredSlug, cards }) {
                       </span>
                     </div>
                   </div>
-                  <div className='foco-card-name'>{data.titleLines.join(' ')}</div>
+                  <div className='foco-card-name'>{card.titleLines.join(' ')}</div>
                   <div className='foco-card-region'>
-                    {data.regionLine?.split('·')[0]?.trim() || data.regionLine}
+                    {card.regionLine?.split('·')[0]?.trim() || card.regionLine}
                   </div>
-                  <div className='foco-card-summary'>{data.summary}</div>
+                  <div className='foco-card-summary'>{card.summary}</div>
                   <div className='foco-card-footer'>
                     <span className='foco-card-articles'>
                       {card.articleCount} artículo{card.articleCount !== 1 ? 's' : ''}
@@ -133,8 +123,7 @@ export default function FocosIndexClient({ featuredSlug, cards }) {
                   </div>
                 </div>
               </Link>
-            )
-          })}
+          ))}
         </div>
       </div>
     </>
