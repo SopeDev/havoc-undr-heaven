@@ -98,8 +98,15 @@ const THEMES = {
   mundo: FALLBACK
 }
 
-export default function TemaPage({ params }) {
-  const temaSlug = params?.tema
+const FEED_CATEGORY_FILTERS = [
+  { key: 'todo', label: 'Todo', href: slug => `/temas/${slug}` },
+  { key: 'analisis', label: 'Análisis', href: slug => `/categoria/analisis?tema=${slug}` },
+  { key: 'reflexion', label: 'Reflexión', href: slug => `/categoria/reflexion?tema=${slug}` },
+  { key: 'newsletter', label: 'Newsletter', href: slug => `/categoria/newsletter?tema=${slug}` }
+]
+
+export default async function TemaPage({ params }) {
+  const { tema: temaSlug } = await params
   const tema = THEMES[temaSlug] || FALLBACK
 
   return (
@@ -170,10 +177,16 @@ export default function TemaPage({ params }) {
       <div className='tema-body'>
         <div className='tema-feed'>
           <div className='feed-filter-row'>
-            <div className='feed-filter active'>Todo</div>
-            <div className='feed-filter'>Análisis</div>
-            <div className='feed-filter'>Reflexión</div>
-            <div className='feed-filter'>Newsletter</div>
+            {FEED_CATEGORY_FILTERS.map(f => (
+              <Link
+                key={f.key}
+                href={f.href(temaSlug || 'mundo')}
+                className={f.key === 'todo' ? 'feed-filter active' : 'feed-filter'}
+                scroll={false}
+              >
+                {f.label}
+              </Link>
+            ))}
           </div>
 
           <div className='feed-hero'>

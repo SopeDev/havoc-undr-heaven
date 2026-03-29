@@ -29,6 +29,40 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## CMS (Sanity)
+
+Content models and Studio are wired for **Sanity** (aligned with `havoc-nextjs-migration.plan.md`).
+
+### What’s in the repo
+
+- **Schemas** (documents + portable text): [`sanity/schemaTypes/`](sanity/schemaTypes/) — `article`, `author`, `category`, `tag`, and `blockContent`.
+- **Studio (editor UI):** [http://localhost:3000/studio](http://localhost:3000/studio) when the app is running (`npm run dev`).
+- **Read API helpers:** [`src/lib/sanity/client.js`](src/lib/sanity/client.js), [`src/lib/sanity/articles.js`](src/lib/sanity/articles.js), [`src/lib/sanity/queries.js`](src/lib/sanity/queries.js) — use these in server components or route handlers to replace mock data (e.g. `fetchArticleBySlug`).
+
+### One-time setup
+
+1. Create a project at [sanity.io/manage](https://www.sanity.io/manage) (or reuse an existing one).
+2. Copy **Project ID** and choose a **dataset** (usually `production`).
+3. Copy [`.env.example`](.env.example) to `.env.local` and set `NEXT_PUBLIC_SANITY_PROJECT_ID` and `NEXT_PUBLIC_SANITY_DATASET`.
+4. Restart `npm run dev`, open `/studio`, and sign in when prompted.
+5. In **Sanity manage → API → CORS origins**, add `http://localhost:3000` and your production domain (e.g. Vercel URL) so the browser can talk to the API.
+
+Deploying on **Vercel:** add the same `NEXT_PUBLIC_*` variables in the project **Environment Variables** settings.
+
+### Next implementation steps
+
+- Seed **category** / **tag** / **author** documents, then **article** entries (slugs must match existing routes you care about, e.g. `/articulos/[slug]`).
+- Add a **Portable Text** renderer (`@portabletext/react`, already pulled in via `next-sanity`) in the article page and switch from mock `MOCK_ARTICLES` to `fetchArticleBySlug`.
+- Later: `tensionPoint` schema + homepage singleton to match focos and the home feed.
+
+### CLI (optional)
+
+```bash
+npx sanity@latest help
+```
+
+`package.json` includes a `sanity` script; `sanity.cli.mjs` reads the same env vars as the Next app.
+
 ## Deploy (live URL on every push)
 
 This app is meant to deploy with **[Vercel](https://vercel.com)** connected to **GitHub**. After you connect the repo, Vercel gives you a production URL for `main` and **preview URLs** for branches and pull requests (the Vercel bot comments on PRs with the link).

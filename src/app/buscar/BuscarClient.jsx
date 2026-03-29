@@ -6,7 +6,7 @@ import SiteHeader from '../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../components/SiteFooter/SiteFooter'
 import NewsletterSignup from '../../components/NewsletterSignup/NewsletterSignup'
 
-const ARTICLES = [
+const MOCK_ARTICLES = [
   {
     cat: 'Análisis',
     tags: 'China · Tecnología · Estados Unidos',
@@ -86,12 +86,34 @@ const ARTICLES = [
   }
 ]
 
-const TRENDING = [
+const FALLBACK_TRENDING = [
   { title: 'La guerra de los semiconductores no es sobre chips', meta: 'Análisis · 28 Feb 2026' },
   { title: 'El Imperio Americano en decadencia', meta: 'Análisis · 25 Feb 2026' },
   { title: 'Europa en crisis existencial', meta: 'Análisis · 20 Feb 2026' },
   { title: 'Los Estados-Civilización y el fin del universalismo liberal', meta: 'Reflexión · 1 Feb 2026' }
 ]
+
+function mergeArticlePools(cmsRows, mockRows) {
+  const map = new Map()
+  for (const row of cmsRows) {
+    map.set(row.url, row)
+  }
+  for (const row of mockRows) {
+    if (!map.has(row.url)) map.set(row.url, row)
+  }
+  return [...map.values()]
+}
+
+/** Mock uses YYYYMMDD `ts`; CMS uses unix seconds — normalize to unix seconds for sorting. */
+function comparableTs(row) {
+  const t = row.ts
+  if (t > 1_000_000_000) return t
+  const str = String(t).padStart(8, '0')
+  const y = Number.parseInt(str.slice(0, 4), 10)
+  const m = Number.parseInt(str.slice(4, 6), 10) - 1
+  const d = Number.parseInt(str.slice(6, 8), 10)
+  return Math.floor(Date.UTC(y, m, d) / 1000)
+}
 
 const escapeRegExp = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -112,7 +134,16 @@ const scoreArticle = (a, q) => {
   return score
 }
 
-export default function BuscarClient() {
+const matchesCategoryFilter = (a, currentFilter) => {
+  if (currentFilter === 'todo') return true
+  if (currentFilter === 'analisis') return a.cat === 'Análisis'
+  if (currentFilter === 'reflexion') return a.cat === 'Reflexión'
+  if (currentFilter === 'newsletter') return a.cat === 'Newsletter'
+  if (currentFilter === 'redes') return a.cat === 'Redes'
+  return true
+}
+
+export default function BuscarClient({ cmsArticles = [] }) {
   const router = useRouter()
   const params = useSearchParams()
 
@@ -122,26 +153,31 @@ export default function BuscarClient() {
   const [currentFilter, setCurrentFilter] = useState('todo')
   const [currentSort, setCurrentSort] = useState('relevancia')
 
+  const pool = useMemo(() => mergeArticlePools(cmsArticles, MOCK_ARTICLES), [cmsArticles])
+
+  const trending = useMemo(() => {
+    if (pool.length === 0) return FALLBACK_TRENDING
+    const top = [...pool].sort((a, b) => comparableTs(b) - comparableTs(a)).slice(0, 4)
+    return top.map(a => ({
+      title: a.title,
+      meta: `${a.cat} · ${a.date}`
+    }))
+  }, [pool])
+
   const results = useMemo(() => {
     const q = query.trim()
-    let filtered = ARTICLES.filter(a => {
-      const matchFilter =
-        currentFilter === 'todo' ||
-        (currentFilter === 'analisis' && a.cat === 'Análisis') ||
-        (currentFilter === 'reflexion' && a.cat === 'Reflexión') ||
-        (currentFilter === 'newsletter' && a.cat === 'Newsletter')
-
-      if (!matchFilter) return false
+    let filtered = pool.filter(a => {
+      if (!matchesCategoryFilter(a, currentFilter)) return false
       if (!q) return true
       return scoreArticle(a, q) > 0
     })
 
-    if (currentSort === 'reciente') filtered.sort((a, b) => b.ts - a.ts)
-    else if (currentSort === 'antiguo') filtered.sort((a, b) => a.ts - b.ts)
+    if (currentSort === 'reciente') filtered.sort((a, b) => comparableTs(b) - comparableTs(a))
+    else if (currentSort === 'antiguo') filtered.sort((a, b) => comparableTs(a) - comparableTs(b))
     else if (q) filtered.sort((a, b) => scoreArticle(b, q) - scoreArticle(a, q))
 
     return filtered
-  }, [currentFilter, currentSort, query])
+  }, [currentFilter, currentSort, query, pool])
 
   const goToQuery = nextQ => {
     const clean = nextQ.trim()
@@ -289,8 +325,8 @@ export default function BuscarClient() {
               <div className='trending-section'>
                 <div className='trending-label'>Artículos más leídos</div>
                 <div className='trending-grid'>
-                  {TRENDING.map((t, i) => (
-                    <div key={t.title} className='trending-item'>
+                  {trending.map((t, i) => (
+                    <div key={`${t.title}-${i}`} className='trending-item'>
                       <div className='trending-num'>0{i + 1}</div>
                       <div className='trending-title'>{t.title}</div>
                       <div className='trending-meta'>{t.meta}</div>
@@ -369,8 +405,8 @@ export default function BuscarClient() {
                 <div className='trending-section'>
                   <div className='trending-label'>Más leídos</div>
                   <div className='trending-grid'>
-                    {TRENDING.map((t, i) => (
-                      <div key={t.title} className='trending-item'>
+                    {trending.map((t, i) => (
+                      <div key={`${t.title}-${i}`} className='trending-item'>
                         <div className='trending-num'>0{i + 1}</div>
                         <div className='trending-title'>{t.title}</div>
                         <div className='trending-meta'>{t.meta}</div>
