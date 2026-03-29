@@ -147,6 +147,39 @@ export const focoBySlugQuery = groq`
   }
 `
 
+export const tagBySlugQuery = groq`
+  *[_type == "tag" && slug.current == $slug][0]{
+    _id,
+    name,
+    "slug": slug.current,
+    description
+  }
+`
+
+export const articlesByTagSlugQuery = groq`
+  *[_type == "article" && defined(slug.current) && $tagSlug in tags[]->slug.current] | order(publishedAt desc) {
+    title,
+    "slug": slug.current,
+    deck,
+    publishedAt,
+    readingTimeMinutes,
+    "categoryName": category->name,
+    "categorySlug": category->slug.current,
+    "tagNames": tags[]->name
+  }
+`
+
+export const focosByTagSlugQuery = groq`
+  *[_type == "foco" && defined(slug.current) && $tagSlug in tags[]->slug.current] | order(sortOrder asc, title asc) {
+    title,
+    "slug": slug.current,
+    titleLines,
+    status,
+    regionLineOverride,
+    "tagNames": tags[]->name
+  }
+`
+
 /** Articles that share at least one tag with the foco ($tagRefs = array of tag document _id) */
 export const articlesForFocoTagsQuery = groq`
   *[_type == "article" && defined(slug.current) && defined(tags[@._ref in $tagRefs][0])] | order(publishedAt desc) {

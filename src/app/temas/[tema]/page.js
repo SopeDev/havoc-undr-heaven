@@ -2,6 +2,10 @@ import Link from 'next/link'
 import SiteHeader from '../../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../../components/SiteFooter/SiteFooter'
 import NewsletterSignup from '../../../components/NewsletterSignup/NewsletterSignup'
+import { isSanityConfigured } from '../../../lib/sanity/client'
+import { fetchTemaPageData } from '../../../lib/sanity/temas'
+
+export const revalidate = 60
 
 const TOP_TYPE_ITEMS = [
   { href: '/', label: 'Todo', activeKey: 'todo' },
@@ -105,9 +109,31 @@ const FEED_CATEGORY_FILTERS = [
   { key: 'newsletter', label: 'Newsletter', href: slug => `/categoria/newsletter?tema=${slug}` }
 ]
 
+async function resolveTema(temaSlug) {
+  if (isSanityConfigured()) {
+    const cms = await fetchTemaPageData(temaSlug)
+    if (cms) return cms
+  }
+  return THEMES[temaSlug] || FALLBACK
+}
+
+export async function generateMetadata({ params }) {
+  const { tema: temaSlug } = await params
+  const tema = await resolveTema(temaSlug)
+  const title = `${tema.label} — HAVOC UNDR HEAVEN`
+  const desc = tema.desc || undefined
+  return {
+    title,
+    description: desc && desc.length > 160 ? `${desc.slice(0, 157)}…` : desc
+  }
+}
+
 export default async function TemaPage({ params }) {
   const { tema: temaSlug } = await params
-  const tema = THEMES[temaSlug] || FALLBACK
+  const tema = await resolveTema(temaSlug)
+
+  const hasHero = tema.hero !== null && tema.hero !== undefined
+  const hasArticles = tema.articles.length > 0
 
   return (
     <>
@@ -189,38 +215,50 @@ export default async function TemaPage({ params }) {
             ))}
           </div>
 
-          <div className='feed-hero'>
-            <div className='feed-hero-img' />
-            <div className='feed-eyebrow'>
-              <span className='cat-tag'>{tema.hero.cat}</span>
-              <span className='topic-tag'>{tema.hero.tags}</span>
-            </div>
-            <h2 className='feed-hero-title'>{tema.hero.title}</h2>
-            <p className='feed-hero-deck'>{tema.hero.deck}</p>
-            <div className='feed-hero-meta'>
-              <span>{tema.hero.date}</span>
-              <span>{tema.hero.time}</span>
-            </div>
-          </div>
-
-          {tema.articles.map(a => (
-            <div key={a.title} className='feed-item' role='link' tabIndex={0}>
-              <div>
+          {hasHero ? (
+            <Link href={tema.hero.href}>
+              <div className='feed-hero'>
+                <div className='feed-hero-img' />
                 <div className='feed-eyebrow'>
-                  <span className='cat-tag'>{a.cat}</span>
-                  <span className='topic-tag'>{a.tags}</span>
+                  <span className='cat-tag'>{tema.hero.cat}</span>
+                  <span className='topic-tag'>{tema.hero.tags}</span>
                 </div>
-                <div className='feed-item-title'>{a.title}</div>
-                <div className='feed-item-excerpt'>{a.excerpt}</div>
-                <div className='feed-item-meta'>
-                  {a.date} · {a.time}
+                <h2 className='feed-hero-title'>{tema.hero.title}</h2>
+                <p className='feed-hero-deck'>{tema.hero.deck}</p>
+                <div className='feed-hero-meta'>
+                  <span>{tema.hero.date}</span>
+                  <span>{tema.hero.time}</span>
                 </div>
               </div>
-              <div className='feed-thumb' />
-            </div>
+            </Link>
+          ) : (
+            <p style={{ padding: '1.5rem 0', color: 'var(--muted, #666)' }}>
+              No hay artículos publicados con este tema todavía.
+            </p>
+          )}
+
+          {tema.articles.map(a => (
+            <Link key={a.href || a.title} href={a.href || '#'}>
+              <div className='feed-item' role='link' tabIndex={0}>
+                <div>
+                  <div className='feed-eyebrow'>
+                    <span className='cat-tag'>{a.cat}</span>
+                    <span className='topic-tag'>{a.tags}</span>
+                  </div>
+                  <div className='feed-item-title'>{a.title}</div>
+                  <div className='feed-item-excerpt'>{a.excerpt}</div>
+                  <div className='feed-item-meta'>
+                    {a.date} · {a.time}
+                  </div>
+                </div>
+                <div className='feed-thumb' />
+              </div>
+            </Link>
           ))}
 
-          <div className='load-more'>Cargar más artículos</div>
+          {(hasHero || hasArticles) && (
+            <div className='load-more'>Cargar más artículos</div>
+          )}
         </div>
 
         <aside className='tema-sidebar'>
@@ -244,13 +282,15 @@ export default async function TemaPage({ params }) {
             <div className='sidebar-block'>
               <div className='sidebar-label'>Focos de Tensión</div>
               {tema.focos.map(f => (
-                <div key={f.name} className='foco-row'>
-                  <div className='fdot-sm' style={{ background: f.color }} />
-                  <div>
-                    <div className='foco-row-name'>{f.name}</div>
-                    <div className='foco-row-region'>{f.region}</div>
+                <Link key={f.slug || f.name} href={f.slug ? `/focos/${f.slug}` : '#'}>
+                  <div className='foco-row'>
+                    <div className='fdot-sm' style={{ background: f.color }} />
+                    <div>
+                      <div className='foco-row-name'>{f.name}</div>
+                      <div className='foco-row-region'>{f.region}</div>
+                    </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : null}
@@ -261,4 +301,3 @@ export default async function TemaPage({ params }) {
     </>
   )
 }
-
