@@ -1,4 +1,24 @@
-export const VALID_CATEGORY_SLUGS = ['analisis', 'reflexion', 'newsletter', 'redes']
+export const VALID_CATEGORY_SLUGS = ['analisis', 'reflexiones', 'newsletter', 'redes']
+
+/** Análisis ↔ Reflexiones sidebar swap; other slugs use another category from nav if available */
+const CROSS_CATEGORY_PAIR = {
+  analisis: 'reflexiones',
+  reflexiones: 'analisis'
+}
+
+/**
+ * @param {string} currentSlug
+ * @param {Array<{ slug: string }>} categoriesFromNav
+ * @returns {string | null}
+ */
+export function resolveCrossCategorySlug(currentSlug, categoriesFromNav) {
+  const list = Array.isArray(categoriesFromNav) ? categoriesFromNav : []
+  const slugs = new Set(list.map(c => c.slug).filter(Boolean))
+  const paired = CROSS_CATEGORY_PAIR[currentSlug]
+  if (paired && slugs.has(paired)) return paired
+  const others = list.map(c => c.slug).filter(s => s && s !== currentSlug)
+  return others[0] || null
+}
 
 /** Slugs align with `/temas/[tema]` so filters and tema pages stay consistent */
 export const CATEGORIA_TOPIC_FILTERS = [
@@ -97,8 +117,8 @@ export const CATEGORY_DATA = {
       }
     ]
   },
-  reflexion: {
-    title: 'Reflexión',
+  reflexiones: {
+    title: 'Reflexiones',
     desc:
       'Ensayos de largo aliento sobre las grandes preguntas del orden mundial. No cubrimos noticias — cubrimos las ideas que explican por qué el mundo es como es. Historia, poder, civilización.',
     stats: [
@@ -107,7 +127,7 @@ export const CATEGORY_DATA = {
       { label: 'Frecuencia', val: '2–3 por mes' }
     ],
     hero: {
-      cat: 'Reflexión',
+      cat: 'Reflexiones',
       topic: 'Civilización · Orden Mundial',
       title: 'El fin del mundo que construimos',
       deck:
@@ -118,7 +138,7 @@ export const CATEGORY_DATA = {
     },
     items: [
       {
-        cat: 'Reflexión',
+        cat: 'Reflexiones',
         topic: 'Europa · OTAN · Ucrania',
         title: 'La equivocación de Occidente con Ucrania',
         excerpt:
@@ -128,7 +148,7 @@ export const CATEGORY_DATA = {
         href: '/articulos/la-equivocacion-de-occidente-con-ucrania'
       },
       {
-        cat: 'Reflexión',
+        cat: 'Reflexiones',
         topic: 'China · Civilización',
         title: 'El propósito chino: Zhōng Mèng y Xi Jinping',
         excerpt:
@@ -199,4 +219,39 @@ export const CATEGORY_DATA = {
       }
     ]
   }
+}
+
+/**
+ * Mock sidebar: three entries from the paired category’s static data.
+ * @param {string} currentKey
+ * @returns {{ sectionTitle: string, items: Array<{ tags: string, title: string, date: string, href: string }> }}
+ */
+export function getCrossCategorySidebarMock(currentKey) {
+  const crossSlug = resolveCrossCategorySlug(
+    currentKey,
+    VALID_CATEGORY_SLUGS.map(slug => ({ slug }))
+  )
+  const mock = crossSlug ? CATEGORY_DATA[crossSlug] : null
+  const sectionTitle = mock?.title || 'HUH'
+  const rows = []
+  if (mock?.hero) {
+    rows.push({
+      tags: mock.hero.topic,
+      title: mock.hero.title,
+      date: mock.hero.date,
+      href: mock.hero.href
+    })
+  }
+  if (mock?.items) {
+    for (const item of mock.items) {
+      if (rows.length >= 3) break
+      rows.push({
+        tags: item.topic,
+        title: item.title,
+        date: item.date,
+        href: item.href
+      })
+    }
+  }
+  return { sectionTitle, items: rows.slice(0, 3) }
 }

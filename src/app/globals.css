@@ -178,17 +178,6 @@ nav {
   color: #FFF;
 }
 
-/* VERSION LABEL */
-.version-label {
-  background: var(--dark);
-  text-align: center;
-  padding: 8px;
-  font-size: 9px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: #555;
-}
-
 /* ── MASTHEAD ── */
 .masthead {
   background: var(--black);
@@ -2970,6 +2959,19 @@ a.topic-pill {
   color: var(--muted);
   display: flex;
   gap: 16px;
+}
+
+.cat-feed .feed-hero.feed-hero--dispatch {
+  cursor: default;
+  border-bottom: 2px solid var(--muted);
+}
+
+.cat-feed .feed-hero.feed-hero--dispatch:hover {
+  opacity: 1;
+}
+
+.cat-feed .feed-hero-meta.feed-hero-meta--dispatch {
+  gap: 40px;
 }
 
 .cat-feed .feed-item {

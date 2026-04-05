@@ -12,23 +12,39 @@ const FOCO_DOT_COLOR = {
   cold: 'var(--blue)'
 }
 
+/** Last N articles (newest first) used to compute co-occurring tags */
+const RELATED_ARTICLE_WINDOW = 20
+const RELATED_TAGS_LIMIT = 6
+
 function tagLineFromNames(names) {
   return Array.isArray(names) ? names.filter(Boolean).join(' · ') : ''
 }
 
-function deriveRelatedTags(articles, currentTagName) {
-  const current = (currentTagName || '').toLowerCase()
-  const seen = new Set()
-  const result = []
-  for (const a of articles) {
-    if (!Array.isArray(a.tagNames)) continue
-    for (const t of a.tagNames) {
-      if (!t || t.toLowerCase() === current || seen.has(t)) continue
-      seen.add(t)
-      result.push(t)
+/**
+ * From the newest articles that include the current tag, count other tags and
+ * return the top RELATED_TAGS_LIMIT by frequency (desc), then name for ties.
+ * @param {Array<{ tagList?: Array<{ name?: string, slug?: string }> }>} articles
+ * @param {string} currentTagSlug
+ * @returns {Array<{ name: string, slug: string }>}
+ */
+function deriveRelatedTags(articles, currentTagSlug) {
+  const window = Array.isArray(articles) ? articles.slice(0, RELATED_ARTICLE_WINDOW) : []
+  const counts = new Map()
+  for (const a of window) {
+    const list = Array.isArray(a.tagList) ? a.tagList : []
+    for (const t of list) {
+      const slug = typeof t?.slug === 'string' && t.slug.trim() ? t.slug.trim() : null
+      const name = typeof t?.name === 'string' && t.name.trim() ? t.name.trim() : null
+      if (!slug || slug === currentTagSlug) continue
+      const prev = counts.get(slug)
+      if (prev) prev.count += 1
+      else counts.set(slug, { slug, name: name || slug, count: 1 })
     }
   }
-  return result.slice(0, 8)
+  return [...counts.values()]
+    .sort((x, y) => y.count - x.count || x.name.localeCompare(y.name, 'es'))
+    .slice(0, RELATED_TAGS_LIMIT)
+    .map(({ name, slug }) => ({ name, slug }))
 }
 
 function deriveSections(articles) {
@@ -112,7 +128,7 @@ export async function fetchTemaPageData(temaSlug) {
     count: safeArticles.length,
     latest,
     sections: deriveSections(safeArticles),
-    related: deriveRelatedTags(safeArticles, tag.name),
+    related: deriveRelatedTags(safeArticles, tag.slug),
     hero: safeArticles.length > 0 ? mapArticleToHero(safeArticles[0]) : null,
     articles: safeArticles.slice(1).map(mapArticleToFeedItem),
     sidebar: safeArticles.slice(1, 4).map(a => ({

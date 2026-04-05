@@ -1,4 +1,5 @@
 import { groq } from 'next-sanity'
+import { groqArticleVisibleOnWeb } from './articleVisibility'
 
 export const articleBySlugQuery = groq`
   *[_type == "article" && slug.current == $slug][0]{
@@ -8,6 +9,8 @@ export const articleBySlugQuery = groq`
     deck,
     publishedAt,
     readingTimeMinutes,
+    includeInWeeklyNewsletter,
+    releasedToWebAt,
     isNewsletterEdition,
     coverImage{
       asset,
@@ -21,11 +24,11 @@ export const articleBySlugQuery = groq`
 `
 
 export const articleSlugsQuery = groq`
-  *[_type == "article" && defined(slug.current)]{"slug": slug.current}
+  *[_type == "article" && defined(slug.current) && ${groqArticleVisibleOnWeb}]{"slug": slug.current}
 `
 
 export const recentArticlesQuery = groq`
-  *[_type == "article" && defined(slug.current)] | order(publishedAt desc)[0...$limit]{
+  *[_type == "article" && defined(slug.current) && ${groqArticleVisibleOnWeb}] | order(publishedAt desc)[0...$limit]{
     _id,
     title,
     "slug": slug.current,
@@ -37,8 +40,21 @@ export const recentArticlesQuery = groq`
   }
 `
 
+/** Homepage feed: category name + tag names for eyebrow lines */
+export const homePageArticlesQuery = groq`
+  *[_type == "article" && defined(slug.current) && ${groqArticleVisibleOnWeb}] | order(publishedAt desc)[0...$limit] {
+    title,
+    "slug": slug.current,
+    deck,
+    publishedAt,
+    readingTimeMinutes,
+    "categoryName": category->name,
+    "tagNames": tags[]->name
+  }
+`
+
 export const relatedArticlesQuery = groq`
-  *[_type == "article" && slug.current != $slug && defined(slug.current)] | order(publishedAt desc)[0...3]{
+  *[_type == "article" && slug.current != $slug && defined(slug.current) && ${groqArticleVisibleOnWeb}] | order(publishedAt desc)[0...3]{
     title,
     "slug": slug.current,
     publishedAt,
@@ -48,7 +64,7 @@ export const relatedArticlesQuery = groq`
 
 /** Full list for /buscar: filter & sort on the client (good until the archive is very large). */
 export const searchArticlesQuery = groq`
-  *[_type == "article" && defined(slug.current)] | order(publishedAt desc) {
+  *[_type == "article" && defined(slug.current) && ${groqArticleVisibleOnWeb}] | order(publishedAt desc) {
     title,
     "slug": slug.current,
     deck,
@@ -68,7 +84,7 @@ export const categoryBySlugQuery = groq`
 `
 
 export const articlesByCategorySlugQuery = groq`
-  *[_type == "article" && category->slug.current == $categorySlug && defined(slug.current)] | order(publishedAt desc) {
+  *[_type == "article" && category->slug.current == $categorySlug && defined(slug.current) && ${groqArticleVisibleOnWeb}] | order(publishedAt desc) {
     title,
     "slug": slug.current,
     deck,
@@ -81,13 +97,38 @@ export const articlesByCategorySlugQuery = groq`
 
 /** Same shape as articlesByCategorySlugQuery; $tagSlug must match tag document slug.current */
 export const articlesByCategorySlugAndTagSlugQuery = groq`
-  *[_type == "article" && category->slug.current == $categorySlug && defined(slug.current) && $tagSlug in tags[]->slug.current] | order(publishedAt desc) {
+  *[_type == "article" && category->slug.current == $categorySlug && defined(slug.current) && ${groqArticleVisibleOnWeb} && $tagSlug in tags[]->slug.current] | order(publishedAt desc) {
     title,
     "slug": slug.current,
     deck,
     publishedAt,
     readingTimeMinutes,
     "categoryName": category->name,
+    "tagNames": tags[]->name
+  }
+`
+
+/** Latest N articles in a category (no tema filter). $limit must be a small integer (e.g. 3). */
+export const articlesByCategorySlugLimitedQuery = groq`
+  *[_type == "article" && category->slug.current == $categorySlug && defined(slug.current) && ${groqArticleVisibleOnWeb}] | order(publishedAt desc)[0...$limit] {
+    title,
+    "slug": slug.current,
+    deck,
+    publishedAt,
+    readingTimeMinutes,
+    "categoryName": category->name,
+    "tagNames": tags[]->name
+  }
+`
+
+/** Focos ordered by last updated (editor field, else Sanity system _updatedAt). */
+export const focosLatestByUpdatedQuery = groq`
+  *[_type == "foco" && defined(slug.current)] | order(coalesce(updatedAt, _updatedAt) desc)[0...$limit] {
+    title,
+    "slug": slug.current,
+    titleLines,
+    status,
+    regionLineOverride,
     "tagNames": tags[]->name
   }
 `
@@ -111,7 +152,7 @@ export const focosIndexListQuery = groq`
 
 /** Minimal rows to count articles per foco tag set on the client */
 export const articlesTagRefsQuery = groq`
-  *[_type == "article" && defined(slug.current)] {
+  *[_type == "article" && defined(slug.current) && ${groqArticleVisibleOnWeb}] {
     "tagRefs": tags[]._ref
   }
 `
@@ -157,7 +198,7 @@ export const tagBySlugQuery = groq`
 `
 
 export const articlesByTagSlugQuery = groq`
-  *[_type == "article" && defined(slug.current) && $tagSlug in tags[]->slug.current] | order(publishedAt desc) {
+  *[_type == "article" && defined(slug.current) && ${groqArticleVisibleOnWeb} && $tagSlug in tags[]->slug.current] | order(publishedAt desc) {
     title,
     "slug": slug.current,
     deck,
@@ -165,7 +206,8 @@ export const articlesByTagSlugQuery = groq`
     readingTimeMinutes,
     "categoryName": category->name,
     "categorySlug": category->slug.current,
-    "tagNames": tags[]->name
+    "tagNames": tags[]->name,
+    "tagList": tags[]->{ name, "slug": slug.current }
   }
 `
 
@@ -196,7 +238,7 @@ export const allTagsQuery = groq`
 
 /** Articles that share at least one tag with the foco ($tagRefs = array of tag document _id) */
 export const articlesForFocoTagsQuery = groq`
-  *[_type == "article" && defined(slug.current) && defined(tags[@._ref in $tagRefs][0])] | order(publishedAt desc) {
+  *[_type == "article" && defined(slug.current) && ${groqArticleVisibleOnWeb} && defined(tags[@._ref in $tagRefs][0])] | order(publishedAt desc) {
     title,
     "slug": slug.current,
     deck,
@@ -204,5 +246,34 @@ export const articlesForFocoTagsQuery = groq`
     readingTimeMinutes,
     isNewsletterEdition,
     "categoryName": category->name
+  }
+`
+
+/**
+ * Dispatch editions visible on the web (email already sent).
+ * Do NOT use `articles[]->[_type == "article" && …]` — in GROQ the `[]` filter after `->` can be
+ * evaluated in the *parent* (newsletterIssue) scope, so `_type == "article"` is always false and
+ * every article is dropped. Expand with `articles[]->{ … }` and filter in JS (see newsletterIssues.js).
+ */
+export const newsletterIssuesForWebQuery = groq`
+  *[_type == "newsletterIssue" && defined(emailSentAt) && emailSentAt <= now()] | order(issuedAt desc) {
+    _id,
+    title,
+    issuedAt,
+    intro,
+    "articles": articles[]->{
+      _id,
+      _type,
+      title,
+      "slug": slug.current,
+      deck,
+      publishedAt,
+      readingTimeMinutes,
+      includeInWeeklyNewsletter,
+      releasedToWebAt,
+      "categoryName": category->name,
+      "tagNames": tags[]->name,
+      "tagSlugs": tags[]->slug.current
+    }
   }
 `

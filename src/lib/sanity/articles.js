@@ -3,9 +3,11 @@ import { formatArticleDate } from './articleView'
 import {
   articleBySlugQuery,
   articlesByCategorySlugAndTagSlugQuery,
+  articlesByCategorySlugLimitedQuery,
   articlesByCategorySlugQuery,
   articleSlugsQuery,
   categoryBySlugQuery,
+  homePageArticlesQuery,
   recentArticlesQuery,
   relatedArticlesQuery,
   searchArticlesQuery
@@ -27,6 +29,17 @@ export async function fetchRecentArticles(limit = 12) {
   const client = getSanityClient()
   if (!client) return []
   return client.fetch(recentArticlesQuery, { limit })
+}
+
+/**
+ * @param {number} [limit]
+ * @returns {Promise<Array<Record<string, unknown>>>}
+ */
+export async function fetchHomeArticles(limit = 12) {
+  const client = getSanityClient()
+  if (!client) return []
+  const n = Math.max(1, Math.min(50, Number(limit) || 12))
+  return client.fetch(homePageArticlesQuery, { limit: n })
 }
 
 export async function fetchRelatedArticles(slug) {
@@ -56,6 +69,17 @@ export async function fetchArticlesByCategorySlug(categorySlug, options = {}) {
     return client.fetch(articlesByCategorySlugAndTagSlugQuery, { categorySlug, tagSlug })
   }
   return client.fetch(articlesByCategorySlugQuery, { categorySlug })
+}
+
+/**
+ * @param {string} categorySlug
+ * @param {number} [limit]
+ */
+export async function fetchArticlesByCategorySlugLimited(categorySlug, limit = 3) {
+  const client = getSanityClient()
+  if (!client) return []
+  const n = Math.max(1, Math.min(20, Number(limit) || 3))
+  return client.fetch(articlesByCategorySlugLimitedQuery, { categorySlug, limit: n })
 }
 
 export async function fetchArticlesForSearch() {

@@ -2,7 +2,8 @@ import { urlForImage } from './image'
 
 const CATEGORY_SLUG_BY_NAME = {
   Análisis: 'analisis',
-  Reflexión: 'reflexion',
+  Reflexión: 'reflexiones',
+  Reflexiones: 'reflexiones',
   Newsletter: 'newsletter',
   Redes: 'redes'
 }
@@ -38,8 +39,8 @@ export function buildMockArticleView(mock) {
   const catSlug =
     mock.cat === 'Análisis'
       ? 'analisis'
-      : mock.cat === 'Reflexión'
-        ? 'reflexion'
+      : mock.cat === 'Reflexión' || mock.cat === 'Reflexiones'
+        ? 'reflexiones'
         : mock.cat === 'Newsletter'
           ? 'newsletter'
           : mock.cat === 'Redes'

@@ -51,8 +51,6 @@ export default function SiteHeader() {
 
   return (
     <>
-      <div className='version-label'>Versión 4 — Dos barras: tipos de contenido arriba · filtros regionales abajo</div>
-
       <nav ref={dropdownRootRef}>
         <ul className='nav-links'>
           {NAV_ITEMS.map(item => (
@@ -69,7 +67,7 @@ export default function SiteHeader() {
             </a>
             <div className='nav-dropdown'>
               <Link href='/categoria/analisis'>Análisis</Link>
-              <Link href='/categoria/reflexion'>Reflexión</Link>
+              <Link href='/categoria/reflexiones'>Reflexiones</Link>
               <Link href='/categoria/newsletter'>Newsletter</Link>
               <Link href='/categoria/redes'>Redes</Link>
               <div className='nav-search-wrap'>

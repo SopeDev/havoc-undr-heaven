@@ -149,7 +149,7 @@ export const MOCK_ARTICLES = [
       },
       {
         slug: 'la-equivocacion-de-occidente-con-ucrania',
-        cat: 'Reflexión',
+        cat: 'Reflexiones',
         tagsText: 'Europa · OTAN · Ucrania',
         title: 'La equivocación de Occidente con Ucrania',
         deck:
@@ -173,7 +173,7 @@ export const MOCK_ARTICLES = [
       },
       {
         slug: 'el-proposito-chino-zhong-meng-y-xi-jinping',
-        cat: 'Reflexión',
+        cat: 'Reflexiones',
         tagsText: 'China · Civilización',
         title: 'El propósito chino: Zhōng Mèng y Xi Jinping',
         deck:

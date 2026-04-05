@@ -20,7 +20,7 @@ export default function SiteFooter() {
               <Link href='/categoria/analisis'>Análisis</Link>
             </li>
             <li>
-              <Link href='/categoria/reflexion'>Reflexión</Link>
+              <Link href='/categoria/reflexiones'>Reflexiones</Link>
             </li>
             <li>
               <Link href='/categoria/newsletter'>Newsletter</Link>

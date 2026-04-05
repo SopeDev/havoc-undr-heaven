@@ -194,7 +194,7 @@ export const FOCOS_BY_SLUG = {
         href: '/articulos/la-guerra-de-los-semiconductores-no-es-sobre-chips'
       },
       {
-        cat: 'Reflexión',
+        cat: 'Reflexiones',
         title: 'Taiwán no es Ucrania: por qué las analogías fallan',
         excerpt:
           'La tentación de leer Taiwán como la próxima Ucrania es comprensible pero incorrecta. Las asimetrías geográficas, económicas y nucleares hacen imposible la comparación directa.',

@@ -6,12 +6,18 @@ import NewsletterSignup from '../../../components/NewsletterSignup/NewsletterSig
 import {
   CATEGORY_DATA,
   FOCO_ROWS,
-  SIDEBAR_ANALYSIS,
-  VALID_CATEGORY_SLUGS
+  VALID_CATEGORY_SLUGS,
+  getCrossCategorySidebarMock,
+  resolveCrossCategorySlug
 } from '../categoriaMockData'
-import { fetchArticlesByCategorySlug, fetchCategoryBySlug } from '../../../lib/sanity/articles'
+import {
+  fetchArticlesByCategorySlug,
+  fetchArticlesByCategorySlugLimited,
+  fetchCategoryBySlug
+} from '../../../lib/sanity/articles'
 import { isSanityConfigured } from '../../../lib/sanity/client'
 import { mergeCategoriaPage } from '../../../lib/sanity/categoriaPageData'
+import { fetchFocosSidebarByUpdated } from '../../../lib/sanity/focos'
 import { fetchNavLists } from '../../../lib/sanity/navigation'
 
 export const revalidate = 60
@@ -56,13 +62,30 @@ export default async function CategoriaPage({ params, searchParams }) {
   let sanityCategory = null
   let sanityArticles = []
   let nav = { categories: [], tags: [] }
+  let crossCategoryArticles = []
+  let crossCategoryTitle = null
+  let focoSidebarRows = FOCO_ROWS
 
   if (sanityOn) {
-    ;[sanityCategory, sanityArticles, nav] = await Promise.all([
+    const [cat, articles, navLists, focoSidebarCms] = await Promise.all([
       fetchCategoryBySlug(key),
       fetchArticlesByCategorySlug(key, rawTema ? { tagSlug: rawTema } : {}),
-      fetchNavLists()
+      fetchNavLists(),
+      fetchFocosSidebarByUpdated(4)
     ])
+    sanityCategory = cat
+    sanityArticles = articles
+    nav = navLists
+    if (focoSidebarCms.length > 0) focoSidebarRows = focoSidebarCms
+
+    const crossSlug = resolveCrossCategorySlug(key, nav.categories)
+    crossCategoryTitle =
+      (crossSlug && nav.categories.find(c => c.slug === crossSlug)?.name) ||
+      (crossSlug && CATEGORY_DATA[crossSlug]?.title) ||
+      null
+    crossCategoryArticles = crossSlug
+      ? await fetchArticlesByCategorySlugLimited(crossSlug, 3)
+      : []
   }
 
   const validCategorySlugs = nav.categories.length > 0
@@ -82,9 +105,20 @@ export default async function CategoriaPage({ params, searchParams }) {
   const data = mergeCategoriaPage(key, sanityCategory, sanityArticles, {
     tagFilterActive,
     sanityConfigured: sanityOn,
-    temaLabel
+    temaLabel,
+    crossCategorySidebarArticles: crossCategoryArticles,
+    crossCategoryTitle
   })
-  const sidebarItems = data.sidebar?.length ? data.sidebar : SIDEBAR_ANALYSIS
+
+  const crossMock = getCrossCategorySidebarMock(key)
+  const sidebarItems =
+    data.sidebar?.length > 0 ? data.sidebar : sanityOn ? [] : crossMock.items
+  const sidebarTitle =
+    data.sidebar?.length > 0
+      ? data.sidebarSectionTitle || '—'
+      : sanityOn
+        ? ''
+        : crossMock.sectionTitle
 
   return (
     <>
@@ -111,6 +145,9 @@ export default async function CategoriaPage({ params, searchParams }) {
             {c.name}
           </Link>
         ))}
+        <Link href='/categoria/newsletter' className='section-tab'>
+          Newsletter
+        </Link>
         <Link href='/focos' className='section-tab'>
           Focos de Tensión
         </Link>
@@ -215,29 +252,33 @@ export default async function CategoriaPage({ params, searchParams }) {
             <NewsletterSignup />
           </div>
 
-          <div className='sidebar-block'>
-            <div className='sidebar-label'>Más en {data.title}</div>
-            {sidebarItems.map(s => (
-              <Link key={s.href} href={s.href}>
-                <div className='sidebar-art'>
-                  <div className='sidebar-art-tag'>{s.tags}</div>
-                  <div className='sidebar-art-title'>{s.title}</div>
-                  <div className='sidebar-art-date'>{s.date}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {sidebarItems.length > 0 ? (
+            <div className='sidebar-block'>
+              <div className='sidebar-label'>En {sidebarTitle}</div>
+              {sidebarItems.map(s => (
+                <Link key={s.href} href={s.href}>
+                  <div className='sidebar-art'>
+                    <div className='sidebar-art-tag'>{s.tags}</div>
+                    <div className='sidebar-art-title'>{s.title}</div>
+                    <div className='sidebar-art-date'>{s.date}</div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : null}
 
           <div className='sidebar-block'>
             <div className='sidebar-label'>Focos de Tensión</div>
-            {FOCO_ROWS.map(f => (
-              <div key={f.name} className='foco-row'>
-                <div className='fdot-sm' style={{ background: f.color }} />
-                <div>
-                  <div className='foco-row-name'>{f.name}</div>
-                  <div className='foco-row-region'>{f.region}</div>
+            {focoSidebarRows.map(f => (
+              <Link key={f.slug || f.name} href={f.slug ? `/focos/${f.slug}` : '#'}>
+                <div className='foco-row'>
+                  <div className='fdot-sm' style={{ background: f.color }} />
+                  <div>
+                    <div className='foco-row-name'>{f.name}</div>
+                    <div className='foco-row-region'>{f.region}</div>
+                  </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </aside>

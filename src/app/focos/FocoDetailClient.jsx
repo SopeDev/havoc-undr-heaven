@@ -44,8 +44,11 @@ export default function FocoDetailClient({ data }) {
     archivoFilter === 'todo'
       ? data.archivo
       : data.archivo.filter(a => {
-          const map = { analisis: 'Análisis', reflexion: 'Reflexión', newsletter: 'Newsletter' }
-          return a.cat === map[archivoFilter]
+          if (archivoFilter === 'analisis') return a.cat === 'Análisis'
+          if (archivoFilter === 'reflexiones')
+            return a.cat === 'Reflexiones' || a.cat === 'Reflexión'
+          if (archivoFilter === 'newsletter') return a.cat === 'Newsletter'
+          return true
         })
 
   return (
@@ -168,7 +171,7 @@ export default function FocoDetailClient({ data }) {
               {[
                 { id: 'todo', label: 'Todo' },
                 { id: 'analisis', label: 'Análisis' },
-                { id: 'reflexion', label: 'Reflexión' },
+                { id: 'reflexiones', label: 'Reflexiones' },
                 { id: 'newsletter', label: 'Newsletter' }
               ].map(f => (
                 <button

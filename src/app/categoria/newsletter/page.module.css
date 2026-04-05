@@ -1,0 +1,33 @@
+.issueBlock {
+  margin-bottom: 3rem;
+}
+
+.issueBlock:last-child {
+  margin-bottom: 0;
+}
+
+.articleList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.emptyFeed {
+  padding: 1.5rem 0;
+  color: var(--muted, #666);
+  max-width: 36rem;
+  line-height: 1.5;
+}
+
+.sidebarAsideEmpty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted, #666);
+  line-height: 1.45;
+}
+
+.sidebarAsideEmpty a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

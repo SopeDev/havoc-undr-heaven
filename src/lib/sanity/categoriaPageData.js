@@ -45,6 +45,21 @@ function topicLineMatchesLabel(topicLine, label) {
   return normalizeTopic(topicLine).includes(normalizeTopic(label))
 }
 
+function buildCrossCategorySidebar(docs, crossCategoryTitle) {
+  if (!Array.isArray(docs) || docs.length === 0) {
+    return { sidebar: null, sidebarSectionTitle: null }
+  }
+  return {
+    sidebar: docs.map(d => ({
+      tags: tagLineFromDoc(d) || '—',
+      title: d.title,
+      date: formatArticleDate(d.publishedAt),
+      href: `/articulos/${d.slug}`
+    })),
+    sidebarSectionTitle: crossCategoryTitle || null
+  }
+}
+
 function filterMockCategory(mock, temaLabel) {
   if (!temaLabel) return { mockSlice: mock, feedEmpty: false }
 
@@ -108,16 +123,23 @@ function filterMockCategory(mock, temaLabel) {
 }
 
 /**
- * @param {string} key - URL segment: analisis | reflexion | newsletter | redes
+ * @param {string} key - URL segment: analisis | reflexiones | newsletter | redes
  * @param {{ name?: string, description?: string } | null} sanityCategory
  * @param {Array<Record<string, unknown>>} sanityArticles
- * @param {{ tagFilterActive?: boolean, sanityConfigured?: boolean, temaLabel?: string | null }} [ctx]
+ * @param {{ tagFilterActive?: boolean, sanityConfigured?: boolean, temaLabel?: string | null, crossCategorySidebarArticles?: Array<Record<string, unknown>> | null, crossCategoryTitle?: string | null }} [ctx]
  */
 export function mergeCategoriaPage(key, sanityCategory, sanityArticles, ctx = {}) {
-  const { tagFilterActive = false, sanityConfigured = false, temaLabel = null } = ctx
-  const mock = CATEGORY_DATA[key]
-  const title = sanityCategory?.name?.trim() || mock.title
-  const desc = sanityCategory?.description?.trim() || mock.desc
+  const {
+    tagFilterActive = false,
+    sanityConfigured = false,
+    temaLabel = null,
+    crossCategorySidebarArticles = null,
+    crossCategoryTitle = null
+  } = ctx
+  const mock = CATEGORY_DATA[key] || null
+  const title = sanityCategory?.name?.trim() || mock?.title || 'Categoría'
+  const desc = sanityCategory?.description?.trim() || mock?.desc || ''
+  const thirdStat = mock?.stats?.[2] || { label: 'Secciones', val: '—' }
 
   if (sanityArticles.length > 0) {
     const hero = mapDocToHero(sanityArticles[0], title)
@@ -126,38 +148,54 @@ export function mergeCategoriaPage(key, sanityCategory, sanityArticles, ctx = {}
     const stats = [
       { label: 'Artículos publicados', val: String(sanityArticles.length) },
       { label: 'Más reciente', val: latest },
-      { label: mock.stats[2].label, val: mock.stats[2].val }
+      { label: thirdStat.label, val: thirdStat.val }
     ]
-    const sidebar =
-      sanityArticles.length > 1
-        ? sanityArticles.slice(1, 4).map(d => ({
-            tags: tagLineFromDoc(d) || '—',
-            title: d.title,
-            date: formatArticleDate(d.publishedAt),
-            href: `/articulos/${d.slug}`
-          }))
-        : null
+    const { sidebar, sidebarSectionTitle } = buildCrossCategorySidebar(
+      crossCategorySidebarArticles,
+      crossCategoryTitle
+    )
 
-    return { title, desc, stats, hero, items, sidebar, feedEmpty: false }
+    return { title, desc, stats, hero, items, sidebar, sidebarSectionTitle, feedEmpty: false }
   }
 
   if (tagFilterActive && sanityConfigured) {
+    const { sidebar, sidebarSectionTitle } = buildCrossCategorySidebar(
+      crossCategorySidebarArticles,
+      crossCategoryTitle
+    )
     return {
       title,
       desc,
       stats: [
         { label: 'Artículos publicados', val: '0' },
         { label: 'Más reciente', val: '—' },
-        { label: mock.stats[2].label, val: mock.stats[2].val }
+        { label: thirdStat.label, val: thirdStat.val }
       ],
       hero: null,
       items: [],
-      sidebar: null,
+      sidebar,
+      sidebarSectionTitle,
       feedEmpty: true
     }
   }
 
   if (tagFilterActive && temaLabel) {
+    if (!mock) {
+      return {
+        title,
+        desc,
+        stats: [
+          { label: 'Artículos publicados', val: '0' },
+          { label: 'Más reciente', val: '—' },
+          thirdStat
+        ],
+        hero: null,
+        items: [],
+        sidebar: null,
+        sidebarSectionTitle: null,
+        feedEmpty: true
+      }
+    }
     const { mockSlice, feedEmpty } = filterMockCategory(mock, temaLabel)
     return {
       title,
@@ -166,6 +204,7 @@ export function mergeCategoriaPage(key, sanityCategory, sanityArticles, ctx = {}
       hero: mockSlice.hero,
       items: mockSlice.items,
       sidebar: null,
+      sidebarSectionTitle: null,
       feedEmpty
     }
   }
@@ -173,10 +212,11 @@ export function mergeCategoriaPage(key, sanityCategory, sanityArticles, ctx = {}
   return {
     title,
     desc,
-    stats: mock.stats,
-    hero: mock.hero,
-    items: mock.items,
+    stats: mock?.stats || [thirdStat],
+    hero: mock?.hero || null,
+    items: mock?.items || [],
     sidebar: null,
+    sidebarSectionTitle: null,
     feedEmpty: false
   }
 }

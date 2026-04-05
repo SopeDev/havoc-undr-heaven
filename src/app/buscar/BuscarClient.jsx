@@ -52,7 +52,7 @@ const MOCK_ARTICLES = [
     url: '/articulos/europa-en-crisis-existencial'
   },
   {
-    cat: 'Reflexión',
+    cat: 'Reflexiones',
     tags: 'Europa · OTAN · Ucrania',
     title: 'La equivocación de Occidente con Ucrania',
     excerpt:
@@ -63,7 +63,7 @@ const MOCK_ARTICLES = [
     url: '/articulos/la-equivocacion-de-occidente-con-ucrania'
   },
   {
-    cat: 'Reflexión',
+    cat: 'Reflexiones',
     tags: 'China · Civilización',
     title: 'El propósito chino: Zhōng Mèng y Xi Jinping',
     excerpt:
@@ -90,7 +90,7 @@ const FALLBACK_TRENDING = [
   { title: 'La guerra de los semiconductores no es sobre chips', meta: 'Análisis · 28 Feb 2026' },
   { title: 'El Imperio Americano en decadencia', meta: 'Análisis · 25 Feb 2026' },
   { title: 'Europa en crisis existencial', meta: 'Análisis · 20 Feb 2026' },
-  { title: 'Los Estados-Civilización y el fin del universalismo liberal', meta: 'Reflexión · 1 Feb 2026' }
+  { title: 'Los Estados-Civilización y el fin del universalismo liberal', meta: 'Reflexiones · 1 Feb 2026' }
 ]
 
 function mergeArticlePools(cmsRows, mockRows) {

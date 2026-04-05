@@ -4,8 +4,15 @@ import {
   articlesForFocoTagsQuery,
   articlesTagRefsQuery,
   focoBySlugQuery,
-  focosIndexListQuery
+  focosIndexListQuery,
+  focosLatestByUpdatedQuery
 } from './queries'
+
+const SIDEBAR_STATUS_COLOR = {
+  hot: 'var(--red)',
+  warm: 'var(--orange)',
+  cold: 'var(--blue)'
+}
 
 function defaultStatusLabel(status) {
   if (status === 'hot') return 'Activo'
@@ -172,7 +179,8 @@ function titleLinesFromDoc(doc) {
 function archivoCatFromArticle(row) {
   if (row.isNewsletterEdition) return 'Newsletter'
   const n = row.categoryName || 'Análisis'
-  if (n === 'Reflexión' || n === 'Newsletter' || n === 'Análisis') return n
+  if (n === 'Reflexiones' || n === 'Reflexión') return 'Reflexiones'
+  if (n === 'Newsletter' || n === 'Análisis') return n
   return 'Análisis'
 }
 
@@ -357,4 +365,36 @@ export async function fetchFocoDetailBySlug(slug) {
       : []
 
   return mapSanityFocoToDetail(doc, Array.isArray(articleRows) ? articleRows : [])
+}
+
+/**
+ * Sidebar strip: latest focos by updatedAt (coalesced with _updatedAt in GROQ).
+ * @param {number} [limit]
+ * @returns {Promise<Array<{ name: string, region: string, color: string, slug: string, kind: 'hot' | 'warm' | 'cold' }>>}
+ */
+export async function fetchFocosSidebarByUpdated(limit = 4) {
+  const client = getSanityClient()
+  if (!client) return []
+  const n = Math.max(1, Math.min(12, Number(limit) || 4))
+  const rows = await client.fetch(focosLatestByUpdatedQuery, { limit: n })
+  if (!Array.isArray(rows)) return []
+  return rows.map(doc => {
+    const kind = normalizeKind(doc.status)
+    const tagNames = Array.isArray(doc.tagNames) ? doc.tagNames.filter(Boolean) : []
+    const region =
+      (typeof doc.regionLineOverride === 'string' && doc.regionLineOverride.trim()) ||
+      (tagNames.length ? tagNames.join(' · ') : '—')
+    const lines = Array.isArray(doc.titleLines)
+      ? doc.titleLines.filter(x => typeof x === 'string' && x.trim())
+      : []
+    const titleBase = typeof doc.title === 'string' ? doc.title.trim() : ''
+    const name = lines.length > 0 ? lines.join(' ') : titleBase || String(doc.slug || '')
+    return {
+      name,
+      region,
+      color: SIDEBAR_STATUS_COLOR[kind] || SIDEBAR_STATUS_COLOR.warm,
+      slug: doc.slug,
+      kind
+    }
+  })
 }

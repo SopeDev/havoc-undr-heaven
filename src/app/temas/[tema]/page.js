@@ -14,8 +14,15 @@ const FALLBACK = {
     'El nuevo orden mundial en su totalidad — la contra-globalización, el multipolarismo y los marcos conceptuales para entender la transición sistémica.',
   count: 12,
   latest: '28 Feb 2026',
-  sections: 'Análisis · Reflexión',
-  related: ['China', 'Estados Unidos', 'Sur Global', 'BRICS', 'Geoeconomía', 'Diplomacia'],
+  sections: 'Análisis · Reflexiones',
+  related: [
+    { name: 'China', slug: 'china' },
+    { name: 'Estados Unidos', slug: 'estados-unidos' },
+    { name: 'Sur Global', slug: 'mundo' },
+    { name: 'BRICS', slug: 'brics' },
+    { name: 'Geoeconomía', slug: 'geoeconomia' },
+    { name: 'Diplomacia', slug: 'diplomacia' }
+  ],
   hero: {
     cat: 'Análisis',
     tags: 'Orden Mundial · Contra-Globalización',
@@ -163,14 +170,16 @@ export default async function TemaPage({ params }) {
         </div>
       </div>
 
-      <div className='related-bar'>
-        <span className='related-label'>Temas relacionados:</span>
-        {tema.related.map(r => (
-          <a key={r} href='#' className='related-pill'>
-            {r}
-          </a>
-        ))}
-      </div>
+      {tema.related.length > 0 ? (
+        <div className='related-bar'>
+          <span className='related-label'>Temas relacionados:</span>
+          {tema.related.map(r => (
+            <Link key={r.slug} href={`/temas/${r.slug}`} className='related-pill'>
+              {r.name}
+            </Link>
+          ))}
+        </div>
+      ) : null}
 
       <div className='tema-body'>
         <div className='tema-feed'>

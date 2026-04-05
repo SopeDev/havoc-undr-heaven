@@ -53,8 +53,25 @@ export default defineType({
       validation: Rule => Rule.min(1).integer()
     }),
     defineField({
+      name: 'includeInWeeklyNewsletter',
+      title: 'Incluir en el Dispatch semanal',
+      description:
+        'Marcá los textos del Dispatch. Podés dejarlo en true: el sitio público los muestra solo cuando “Liberado al sitio el” tiene fecha y ya pasó. Completá Deck / excerpt para el correo (“Leer más”).',
+      type: 'boolean',
+      initialValue: false
+    }),
+    defineField({
+      name: 'releasedToWebAt',
+      title: 'Liberado al sitio el',
+      description:
+        'Cuándo el artículo puede verse en la web. Vacío o fecha futura = oculto en listas y en /articulos/… aunque “Incluir en el Dispatch” siga en true. Tras el envío, el job (o edición manual) pone aquí la fecha/hora — normalmente “ahora” o la del envío.',
+      type: 'datetime'
+    }),
+    defineField({
       name: 'isNewsletterEdition',
-      title: 'Newsletter edition',
+      title: 'Edición newsletter (legacy)',
+      description:
+        'Campo histórico. El flujo actual usa “Incluir en el Dispatch semanal” + documentos “Edición newsletter (Dispatch)”. Dejá en false salvo contenido antiguo que dependa de esto.',
       type: 'boolean',
       initialValue: false
     }),
@@ -65,7 +82,20 @@ export default defineType({
     })
   ],
   preview: {
-    select: { title: 'title', subtitle: 'deck', media: 'coverImage' }
+    select: {
+      title: 'title',
+      subtitle: 'deck',
+      media: 'coverImage',
+      weekly: 'includeInWeeklyNewsletter'
+    },
+    prepare({ title, subtitle, media, weekly }) {
+      const base = subtitle || ''
+      return {
+        title,
+        subtitle: weekly ? (base ? `${base} · Dispatch` : 'Dispatch semanal') : base,
+        media
+      }
+    }
   },
   orderings: [
     {

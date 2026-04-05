@@ -4,6 +4,7 @@ import ArticlePageClient from '../ArticlePageClient'
 import { MOCK_ARTICLES } from '../articleMockData'
 import MockArticleBody from '../MockArticleBody'
 import { fetchArticleBySlug, fetchRelatedArticles } from '../../../lib/sanity/articles'
+import { isArticleWithheldFromWeb } from '../../../lib/sanity/articleVisibility'
 import { isSanityConfigured } from '../../../lib/sanity/client'
 import { buildArticleViewFromSanity, buildMockArticleView } from '../../../lib/sanity/articleView'
 
@@ -12,6 +13,9 @@ export async function generateMetadata({ params }) {
 
   if (isSanityConfigured()) {
     const doc = await fetchArticleBySlug(slug)
+    if (isArticleWithheldFromWeb(doc)) {
+      return { title: 'HAVOC UNDR HEAVEN' }
+    }
     if (doc?.title) {
       return {
         title: `${doc.title} — HAVOC UNDR HEAVEN`,
@@ -36,6 +40,9 @@ export default async function ArticlePage({ params }) {
 
   if (isSanityConfigured()) {
     const doc = await fetchArticleBySlug(slug)
+    if (isArticleWithheldFromWeb(doc)) {
+      notFound()
+    }
     if (doc) {
       const related = await fetchRelatedArticles(slug)
       const view = buildArticleViewFromSanity(doc, related)
