@@ -35,40 +35,6 @@ export function categoryHrefSlug(categoryName, categorySlug) {
  * @param {Record<string, unknown>} doc - fetchArticleBySlug result
  * @param {Array<{ title: string, slug: string, publishedAt?: string, tagLine?: string }>} relatedRows
  */
-export function buildMockArticleView(mock) {
-  const catSlug =
-    mock.cat === 'Análisis'
-      ? 'analisis'
-      : mock.cat === 'Reflexión' || mock.cat === 'Reflexiones'
-        ? 'reflexiones'
-        : mock.cat === 'Newsletter'
-          ? 'newsletter'
-          : mock.cat === 'Redes'
-            ? 'redes'
-            : 'analisis'
-
-  return {
-    source: 'mock',
-    cat: mock.cat,
-    catSlug,
-    tagsText: mock.tagsText,
-    title: mock.title,
-    deck: mock.deck,
-    dateLabel: mock.dateLabel,
-    readingTime: mock.readingTime,
-    author: {
-      name: mock.author.name,
-      initials: mock.author.initials,
-      bio: mock.author.bio,
-      avatarUrl: null
-    },
-    coverCaption: mock.coverCaption,
-    coverUrl: null,
-    tags: mock.tags,
-    related: mock.related.map(r => ({ key: r.title, title: r.title, tag: r.tag, date: r.date, href: null }))
-  }
-}
-
 export function buildArticleViewFromSanity(doc, relatedRows = []) {
   const firstAuthor = Array.isArray(doc.authors) && doc.authors[0] ? doc.authors[0] : null
   const name = firstAuthor?.name || 'Havoc Undr Heaven'
@@ -77,7 +43,6 @@ export function buildArticleViewFromSanity(doc, relatedRows = []) {
   const tagNames = (doc.tags || []).map(t => t?.name).filter(Boolean)
 
   return {
-    source: 'sanity',
     cat: doc.category?.name || 'Análisis',
     catSlug: categoryHrefSlug(doc.category?.name, doc.category?.slug),
     tagsText: tagNames.length ? tagNames.join(' · ') : '—',

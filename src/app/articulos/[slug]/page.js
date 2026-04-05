@@ -1,34 +1,21 @@
 import { notFound } from 'next/navigation'
 import ArticleBodyPortableText from '../../../components/ArticleBodyPortableText/ArticleBodyPortableText'
 import ArticlePageClient from '../ArticlePageClient'
-import { MOCK_ARTICLES } from '../articleMockData'
-import MockArticleBody from '../MockArticleBody'
 import { fetchArticleBySlug, fetchRelatedArticles } from '../../../lib/sanity/articles'
 import { isArticleWithheldFromWeb } from '../../../lib/sanity/articleVisibility'
-import { isSanityConfigured } from '../../../lib/sanity/client'
-import { buildArticleViewFromSanity, buildMockArticleView } from '../../../lib/sanity/articleView'
+import { buildArticleViewFromSanity } from '../../../lib/sanity/articleView'
 
 export async function generateMetadata({ params }) {
   const { slug } = await params
 
-  if (isSanityConfigured()) {
-    const doc = await fetchArticleBySlug(slug)
-    if (isArticleWithheldFromWeb(doc)) {
-      return { title: 'HAVOC UNDR HEAVEN' }
-    }
-    if (doc?.title) {
-      return {
-        title: `${doc.title} — HAVOC UNDR HEAVEN`,
-        description: doc.deck || undefined
-      }
-    }
+  const doc = await fetchArticleBySlug(slug)
+  if (isArticleWithheldFromWeb(doc)) {
+    return { title: 'HAVOC UNDR HEAVEN' }
   }
-
-  const mock = MOCK_ARTICLES.find(a => a.slug === slug)
-  if (mock) {
+  if (doc?.title) {
     return {
-      title: `${mock.title} — HAVOC UNDR HEAVEN`,
-      description: mock.deck
+      title: `${doc.title} — HAVOC UNDR HEAVEN`,
+      description: doc.deck || undefined
     }
   }
 
@@ -38,23 +25,16 @@ export async function generateMetadata({ params }) {
 export default async function ArticlePage({ params }) {
   const { slug } = await params
 
-  if (isSanityConfigured()) {
-    const doc = await fetchArticleBySlug(slug)
-    if (isArticleWithheldFromWeb(doc)) {
-      notFound()
-    }
-    if (doc) {
-      const related = await fetchRelatedArticles(slug)
-      const view = buildArticleViewFromSanity(doc, related)
-      const body = <ArticleBodyPortableText value={doc.body} />
-      return <ArticlePageClient view={view} body={body} />
-    }
+  const doc = await fetchArticleBySlug(slug)
+  if (isArticleWithheldFromWeb(doc)) {
+    notFound()
+  }
+  if (!doc) {
+    notFound()
   }
 
-  const mock = MOCK_ARTICLES.find(a => a.slug === slug)
-  if (!mock) notFound()
-
-  const view = buildMockArticleView(mock)
-  const body = <MockArticleBody blocks={mock.body} />
+  const related = await fetchRelatedArticles(slug)
+  const view = buildArticleViewFromSanity(doc, related)
+  const body = <ArticleBodyPortableText value={doc.body} />
   return <ArticlePageClient view={view} body={body} />
 }

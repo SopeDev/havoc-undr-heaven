@@ -30,7 +30,15 @@ export default function FocosIndexClient({ featured, cards }) {
 
   const regionShort = featured?.regionLine?.split('·')[0]?.trim() || ''
 
-  if (!featured || !cards?.length) return null
+  if (!cards?.length) {
+    return (
+      <div className='focos-body' style={{ padding: '2rem 1.5rem' }}>
+        <p style={{ color: 'var(--muted, #666)', maxWidth: '36rem', margin: 0 }}>
+          No hay focos de tensión publicados en el sitio todavía.
+        </p>
+      </div>
+    )
+  }
 
   return (
     <>

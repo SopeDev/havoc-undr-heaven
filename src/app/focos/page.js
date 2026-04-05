@@ -2,8 +2,6 @@ import Link from 'next/link'
 import SiteHeader from '../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../components/SiteFooter/SiteFooter'
 import FocosIndexClient from './FocosIndexClient'
-import { buildMockFocosIndexCards, resolveMockFeaturedIndexCard } from './focoData'
-import { isSanityConfigured } from '../../lib/sanity/client'
 import { fetchFocosIndexData, pickFeaturedIndexCard } from '../../lib/sanity/focos'
 
 export const revalidate = 60
@@ -28,25 +26,10 @@ function statsFromCards(cards, lastUpdatedLabel) {
 }
 
 export default async function FocosPage() {
-  let cards
-  let stats
-  let fromCms = false
-
-  if (isSanityConfigured()) {
-    const cms = await fetchFocosIndexData()
-    if (cms) {
-      cards = cms.cards
-      stats = cms.stats
-      fromCms = true
-    }
-  }
-
-  if (!cards?.length) {
-    cards = buildMockFocosIndexCards()
-    stats = statsFromCards(cards)
-  }
-
-  const featured = fromCms ? pickFeaturedIndexCard(cards) : resolveMockFeaturedIndexCard(cards)
+  const cms = await fetchFocosIndexData()
+  const cards = cms?.cards ?? []
+  const stats = cms?.stats ?? statsFromCards(cards, '—')
+  const featured = pickFeaturedIndexCard(cards)
 
   return (
     <div className='focos-index'>

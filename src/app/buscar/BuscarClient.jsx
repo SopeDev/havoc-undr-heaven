@@ -6,105 +6,7 @@ import SiteHeader from '../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../components/SiteFooter/SiteFooter'
 import NewsletterSignup from '../../components/NewsletterSignup/NewsletterSignup'
 
-const MOCK_ARTICLES = [
-  {
-    cat: 'Análisis',
-    tags: 'China · Tecnología · Estados Unidos',
-    title: 'La guerra de los semiconductores no es sobre chips',
-    excerpt:
-      'Los controles de exportación de Washington son el primer movimiento de una campaña más profunda — sobre quién define la arquitectura de la próxima era industrial.',
-    date: '28 Feb 2026',
-    ts: 20260228,
-    time: '8 min',
-    url: '/articulos/la-guerra-de-los-semiconductores-no-es-sobre-chips'
-  },
-  {
-    cat: 'Análisis',
-    tags: 'Estados Unidos · Hegemonía',
-    title: 'El Imperio Americano en decadencia',
-    excerpt:
-      'El unipolarismo no terminó con una derrota militar. Terminó con la acumulación silenciosa de alternativas que Washington no supo ver venir.',
-    date: '25 Feb 2026',
-    ts: 20260225,
-    time: '12 min',
-    url: '/articulos/el-imperio-americano-en-decadencia'
-  },
-  {
-    cat: 'Análisis',
-    tags: 'China · BRI',
-    title: 'Cómo la Ruta de la Seda compra lealtad política',
-    excerpt:
-      'La Iniciativa del Cinturón y la Ruta no es un proyecto de desarrollo. Es la infraestructura política del orden chino en construcción.',
-    date: '22 Feb 2026',
-    ts: 20260222,
-    time: '8 min',
-    url: '/articulos/como-la-ruta-de-la-seda-compra-lealtad-politica'
-  },
-  {
-    cat: 'Análisis',
-    tags: 'Europa · Defensa · OTAN',
-    title: 'Europa en crisis existencial',
-    excerpt:
-      'La presión de Trump sobre los aliados europeos aceleró un debate que llevan décadas evitando: ¿puede Europa actuar estratégicamente sin Estados Unidos?',
-    date: '20 Feb 2026',
-    ts: 20260220,
-    time: '9 min',
-    url: '/articulos/europa-en-crisis-existencial'
-  },
-  {
-    cat: 'Reflexiones',
-    tags: 'Europa · OTAN · Ucrania',
-    title: 'La equivocación de Occidente con Ucrania',
-    excerpt:
-      'Occidente ganó el argumento moral pero perdió el cálculo estratégico. La guerra de desgaste no debilita a Rusia tanto como fragmenta a Europa.',
-    date: '10 Feb 2026',
-    ts: 20260210,
-    time: '10 min',
-    url: '/articulos/la-equivocacion-de-occidente-con-ucrania'
-  },
-  {
-    cat: 'Reflexiones',
-    tags: 'China · Civilización',
-    title: 'El propósito chino: Zhōng Mèng y Xi Jinping',
-    excerpt:
-      'El Sueño Chino no es una consigna vacía. Es la articulación de un proyecto civilizacional con siglos de historia detrás.',
-    date: '8 Feb 2026',
-    ts: 20260208,
-    time: '9 min',
-    url: '/articulos/el-proposito-chino-zhong-meng-y-xi-jinping'
-  },
-  {
-    cat: 'Newsletter',
-    tags: 'Resumen Semanal',
-    title: 'Havoc Dispatch #8 — La semana que movió el tablero',
-    excerpt:
-      'Rearmamento europeo, crisis en el Sahel, y los nuevos números del comercio sino-americano. Todo lo que importó esta semana en geopolítica.',
-    date: '28 Feb 2026',
-    ts: 20260228,
-    time: '5 min',
-    url: '/articulos/havoc-dispatch-8-la-semana-que-movio-el-tablero'
-  }
-]
-
-const FALLBACK_TRENDING = [
-  { title: 'La guerra de los semiconductores no es sobre chips', meta: 'Análisis · 28 Feb 2026' },
-  { title: 'El Imperio Americano en decadencia', meta: 'Análisis · 25 Feb 2026' },
-  { title: 'Europa en crisis existencial', meta: 'Análisis · 20 Feb 2026' },
-  { title: 'Los Estados-Civilización y el fin del universalismo liberal', meta: 'Reflexiones · 1 Feb 2026' }
-]
-
-function mergeArticlePools(cmsRows, mockRows) {
-  const map = new Map()
-  for (const row of cmsRows) {
-    map.set(row.url, row)
-  }
-  for (const row of mockRows) {
-    if (!map.has(row.url)) map.set(row.url, row)
-  }
-  return [...map.values()]
-}
-
-/** Mock uses YYYYMMDD `ts`; CMS uses unix seconds — normalize to unix seconds for sorting. */
+/** CMS rows use unix seconds for `ts`; normalize any legacy YYYYMMDD for sorting. */
 function comparableTs(row) {
   const t = row.ts
   if (t > 1_000_000_000) return t
@@ -151,10 +53,10 @@ export default function BuscarClient({ cmsArticles = [], categories = [], tags =
   const [currentFilter, setCurrentFilter] = useState('todo')
   const [currentSort, setCurrentSort] = useState('relevancia')
 
-  const pool = useMemo(() => mergeArticlePools(cmsArticles, MOCK_ARTICLES), [cmsArticles])
+  const pool = useMemo(() => (Array.isArray(cmsArticles) ? cmsArticles : []), [cmsArticles])
 
   const trending = useMemo(() => {
-    if (pool.length === 0) return FALLBACK_TRENDING
+    if (pool.length === 0) return []
     const top = [...pool].sort((a, b) => comparableTs(b) - comparableTs(a)).slice(0, 4)
     return top.map(a => ({
       title: a.title,
@@ -307,18 +209,20 @@ export default function BuscarClient({ cmsArticles = [], categories = [], tags =
                 )}
               </div>
 
-              <div className='trending-section'>
-                <div className='trending-label'>Artículos más leídos</div>
-                <div className='trending-grid'>
-                  {trending.map((t, i) => (
-                    <div key={`${t.title}-${i}`} className='trending-item'>
-                      <div className='trending-num'>0{i + 1}</div>
-                      <div className='trending-title'>{t.title}</div>
-                      <div className='trending-meta'>{t.meta}</div>
-                    </div>
-                  ))}
+              {trending.length > 0 ? (
+                <div className='trending-section'>
+                  <div className='trending-label'>Artículos más leídos</div>
+                  <div className='trending-grid'>
+                    {trending.map((t, i) => (
+                      <div key={`${t.title}-${i}`} className='trending-item'>
+                        <div className='trending-num'>0{i + 1}</div>
+                        <div className='trending-title'>{t.title}</div>
+                        <div className='trending-meta'>{t.meta}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -386,7 +290,7 @@ export default function BuscarClient({ cmsArticles = [], categories = [], tags =
                     ))}
               </div>
 
-              {showTrending ? (
+              {showTrending && trending.length > 0 ? (
                 <div className='trending-section'>
                   <div className='trending-label'>Más leídos</div>
                   <div className='trending-grid'>

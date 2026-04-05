@@ -848,6 +848,16 @@ footer {
   overflow-wrap: break-word;
 }
 
+a.dispatch-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+a.dispatch-card:hover .dispatch-title {
+  text-decoration: underline;
+}
+
 .dispatch-card:not(:first-child) {
   padding-left: 24px;
   border-left: 1px solid var(--border);

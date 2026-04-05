@@ -4,12 +4,10 @@ import SiteHeader from '../../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../../components/SiteFooter/SiteFooter'
 import NewsletterSignup from '../../../components/NewsletterSignup/NewsletterSignup'
 import {
-  CATEGORY_DATA,
-  FOCO_ROWS,
-  VALID_CATEGORY_SLUGS,
-  getCrossCategorySidebarMock,
+  DEFAULT_CATEGORY_TAB_LABELS,
+  DEFAULT_CATEGORY_TAB_SLUGS,
   resolveCrossCategorySlug
-} from '../categoriaMockData'
+} from '../categoriaConstants'
 import {
   fetchArticlesByCategorySlug,
   fetchArticlesByCategorySlugLimited,
@@ -27,19 +25,9 @@ export async function generateMetadata({ params }) {
   let title = 'Categoría'
   let description = ''
 
-  if (isSanityConfigured()) {
-    const c = await fetchCategoryBySlug(categoria)
-    if (c?.name) title = c.name
-    if (c?.description) description = c.description
-  }
-
-  if (title === 'Categoría') {
-    const mock = CATEGORY_DATA[categoria]
-    if (mock) {
-      title = mock.title
-      description = mock.desc
-    }
-  }
+  const c = await fetchCategoryBySlug(categoria)
+  if (c?.name) title = c.name
+  if (c?.description) description = c.description
 
   return {
     title: `${title} — HAVOC UNDR HEAVEN`,
@@ -59,66 +47,54 @@ export default async function CategoriaPage({ params, searchParams }) {
 
   const sanityOn = isSanityConfigured()
 
-  let sanityCategory = null
-  let sanityArticles = []
-  let nav = { categories: [], tags: [] }
-  let crossCategoryArticles = []
-  let crossCategoryTitle = null
-  let focoSidebarRows = FOCO_ROWS
+  const [sanityCategory, nav, focoSidebarCms] = await Promise.all([
+    fetchCategoryBySlug(key),
+    fetchNavLists(),
+    fetchFocosSidebarByUpdated(4)
+  ])
 
-  if (sanityOn) {
-    const [cat, articles, navLists, focoSidebarCms] = await Promise.all([
-      fetchCategoryBySlug(key),
-      fetchArticlesByCategorySlug(key, rawTema ? { tagSlug: rawTema } : {}),
-      fetchNavLists(),
-      fetchFocosSidebarByUpdated(4)
-    ])
-    sanityCategory = cat
-    sanityArticles = articles
-    nav = navLists
-    if (focoSidebarCms.length > 0) focoSidebarRows = focoSidebarCms
+  const temaSlug = rawTema && nav.tags.some(t => t.slug === rawTema) ? rawTema : null
+  const sanityArticles = await fetchArticlesByCategorySlug(
+    key,
+    temaSlug ? { tagSlug: temaSlug } : {}
+  )
 
-    const crossSlug = resolveCrossCategorySlug(key, nav.categories)
-    crossCategoryTitle =
-      (crossSlug && nav.categories.find(c => c.slug === crossSlug)?.name) ||
-      (crossSlug && CATEGORY_DATA[crossSlug]?.title) ||
-      null
-    crossCategoryArticles = crossSlug
-      ? await fetchArticlesByCategorySlugLimited(crossSlug, 3)
-      : []
-  }
+  const crossSlug = resolveCrossCategorySlug(key, nav.categories)
+  const crossCategoryTitle = crossSlug
+    ? nav.categories.find(c => c.slug === crossSlug)?.name || null
+    : null
+  const crossCategoryArticles = crossSlug
+    ? await fetchArticlesByCategorySlugLimited(crossSlug, 3)
+    : []
 
-  const validCategorySlugs = nav.categories.length > 0
-    ? nav.categories.map(c => c.slug)
-    : VALID_CATEGORY_SLUGS
+  const focoSidebarRows = focoSidebarCms
+
+  const validCategorySlugs =
+    nav.categories.length > 0 ? nav.categories.map(c => c.slug) : DEFAULT_CATEGORY_TAB_SLUGS
 
   if (!validCategorySlugs.includes(key)) {
     notFound()
   }
 
-  const temaSlug = rawTema && nav.tags.some(t => t.slug === rawTema) ? rawTema : rawTema
   const tagFilterActive = Boolean(temaSlug)
-  const temaLabel = temaSlug
-    ? (nav.tags.find(t => t.slug === temaSlug)?.name || null)
-    : null
 
-  const data = mergeCategoriaPage(key, sanityCategory, sanityArticles, {
+  const data = mergeCategoriaPage(sanityCategory, sanityArticles, {
     tagFilterActive,
     sanityConfigured: sanityOn,
-    temaLabel,
     crossCategorySidebarArticles: crossCategoryArticles,
     crossCategoryTitle
   })
 
-  const crossMock = getCrossCategorySidebarMock(key)
-  const sidebarItems =
-    data.sidebar?.length > 0 ? data.sidebar : sanityOn ? [] : crossMock.items
-  const sidebarTitle =
-    data.sidebar?.length > 0
-      ? data.sidebarSectionTitle || '—'
-      : sanityOn
-        ? ''
-        : crossMock.sectionTitle
+  const sidebarItems = data.sidebar?.length > 0 ? data.sidebar : []
+  const sidebarTitle = data.sidebar?.length > 0 ? data.sidebarSectionTitle || '—' : ''
+
+  const tabCategories =
+    nav.categories.length > 0
+      ? nav.categories
+      : DEFAULT_CATEGORY_TAB_SLUGS.map(slug => ({
+          name: DEFAULT_CATEGORY_TAB_LABELS[slug] || slug,
+          slug
+        }))
 
   return (
     <>
@@ -136,7 +112,7 @@ export default async function CategoriaPage({ params, searchParams }) {
         <Link href='/' className='section-tab' aria-label='Todo'>
           Todo
         </Link>
-        {nav.categories.map(c => (
+        {tabCategories.map(c => (
           <Link
             key={c.slug}
             href={`/categoria/${c.slug}`}
@@ -199,8 +175,14 @@ export default async function CategoriaPage({ params, searchParams }) {
         <div className='cat-feed'>
           {data.feedEmpty ? (
             <p className='cat-feed-empty' style={{ padding: '1.5rem 0', color: 'var(--muted, #666)' }}>
-              No hay artículos con este tema en esta categoría. Probá otro filtro o{' '}
-              <Link href={`/temas/${temaSlug}`}>ver todo el archivo del tema</Link>.
+              {tagFilterActive && temaSlug ? (
+                <>
+                  No hay artículos con este tema en esta categoría. Probá otro filtro o{' '}
+                  <Link href={`/temas/${temaSlug}`}>ver todo el archivo del tema</Link>.
+                </>
+              ) : (
+                <>No hay artículos publicados en esta categoría todavía.</>
+              )}
             </p>
           ) : null}
 

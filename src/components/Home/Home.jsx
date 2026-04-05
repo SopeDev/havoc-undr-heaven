@@ -10,7 +10,7 @@ import NewsletterSignup from '../NewsletterSignup/NewsletterSignup'
  *   hero: { cat: string, topic: string, title: string, excerpt: string, dateStr: string, timeReadStr: string, href: string } | null,
  *   feedItems: Array<{ cat: string, topic: string, title: string, excerpt: string, dateStr: string, timeStr: string, href: string }>,
  *   sidebarArticles: Array<{ cat: string, topic: string, title: string, excerpt: string, dateStr: string, href: string }>,
- *   dispatchItems: Array<{ cat: string, topic: string, title: string, body: string }>,
+ *   dispatchItems: Array<{ cat: string, topic: string, title: string, body: string, href: string }>,
  *   focoRows: Array<{ name: string, region: string, kind: string, slug: string | null }>
  * }} props
  */
@@ -150,15 +150,15 @@ export default function Home({
           <div className='dispatches-inner'>
             <div className='dispatches-header'>Despachos Recientes</div>
             <div className='dispatches-grid'>
-              {dispatchItems.map((d, i) => (
-                <div key={i} className='dispatch-card'>
+              {dispatchItems.map(d => (
+                <Link key={d.href} href={d.href} className='dispatch-card'>
                   <div className='dispatch-eyebrow'>
                     <span className='dispatch-cat'>{d.cat}</span>
                     <span className='dispatch-region-tag'>{d.topic}</span>
                   </div>
                   <span className='dispatch-title'>{d.title}</span>
                   <div className='dispatch-body'>{d.body}</div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

@@ -277,3 +277,14 @@ export const newsletterIssuesForWebQuery = groq`
     }
   }
 `
+
+/** Homepage “Despachos recientes”: last 3 sent issues, no article expansion */
+export const newsletterIssuesHomeDispatchesQuery = groq`
+  *[_type == "newsletterIssue" && defined(emailSentAt) && emailSentAt <= now()] | order(issuedAt desc)[0..2] {
+    _id,
+    title,
+    issuedAt,
+    intro,
+    "slug": slug.current
+  }
+`

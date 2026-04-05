@@ -1,4 +1,3 @@
-import { CATEGORY_DATA } from '../../app/categoria/categoriaMockData'
 import { formatArticleDate } from './articleView'
 
 function tagLineFromDoc(doc) {
@@ -33,18 +32,6 @@ function mapDocToItem(doc, sectionTitle) {
   }
 }
 
-function normalizeTopic(s) {
-  return (s || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-}
-
-function topicLineMatchesLabel(topicLine, label) {
-  if (!label) return true
-  return normalizeTopic(topicLine).includes(normalizeTopic(label))
-}
-
 function buildCrossCategorySidebar(docs, crossCategoryTitle) {
   if (!Array.isArray(docs) || docs.length === 0) {
     return { sidebar: null, sidebarSectionTitle: null }
@@ -60,86 +47,28 @@ function buildCrossCategorySidebar(docs, crossCategoryTitle) {
   }
 }
 
-function filterMockCategory(mock, temaLabel) {
-  if (!temaLabel) return { mockSlice: mock, feedEmpty: false }
-
-  const heroOk = topicLineMatchesLabel(mock.hero.topic, temaLabel)
-  const itemMatches = mock.items.filter(i => topicLineMatchesLabel(i.topic, temaLabel))
-
-  if (!heroOk && itemMatches.length === 0) {
-    return {
-      mockSlice: {
-        ...mock,
-        stats: [
-          { label: 'Artículos publicados', val: '0' },
-          { label: 'Más reciente', val: '—' },
-          mock.stats[2]
-        ],
-        hero: null,
-        items: []
-      },
-      feedEmpty: true
-    }
-  }
-
-  if (heroOk) {
-    return {
-      mockSlice: {
-        ...mock,
-        stats: [
-          { label: 'Artículos publicados', val: String(1 + itemMatches.length) },
-          { label: 'Más reciente', val: mock.hero.date },
-          mock.stats[2]
-        ],
-        hero: mock.hero,
-        items: itemMatches
-      },
-      feedEmpty: false
-    }
-  }
-
-  const [first, ...rest] = itemMatches
-  return {
-    mockSlice: {
-      ...mock,
-      stats: [
-        { label: 'Artículos publicados', val: String(itemMatches.length) },
-        { label: 'Más reciente', val: first.date },
-        mock.stats[2]
-      ],
-      hero: {
-        cat: first.cat,
-        topic: first.topic,
-        title: first.title,
-        deck: first.excerpt,
-        date: first.date,
-        time: /min/.test(first.time) ? `${first.time} de lectura` : `${first.time} min de lectura`,
-        href: first.href
-      },
-      items: rest
-    },
-    feedEmpty: false
-  }
-}
+const emptyStats = thirdStat => [
+  { label: 'Artículos publicados', val: '0' },
+  { label: 'Más reciente', val: '—' },
+  thirdStat
+]
 
 /**
- * @param {string} key - URL segment: analisis | reflexiones | newsletter | redes
  * @param {{ name?: string, description?: string } | null} sanityCategory
  * @param {Array<Record<string, unknown>>} sanityArticles
- * @param {{ tagFilterActive?: boolean, sanityConfigured?: boolean, temaLabel?: string | null, crossCategorySidebarArticles?: Array<Record<string, unknown>> | null, crossCategoryTitle?: string | null }} [ctx]
+ * @param {{ tagFilterActive?: boolean, sanityConfigured?: boolean, crossCategorySidebarArticles?: Array<Record<string, unknown>> | null, crossCategoryTitle?: string | null }} [ctx]
  */
-export function mergeCategoriaPage(key, sanityCategory, sanityArticles, ctx = {}) {
+export function mergeCategoriaPage(sanityCategory, sanityArticles, ctx = {}) {
   const {
     tagFilterActive = false,
     sanityConfigured = false,
-    temaLabel = null,
     crossCategorySidebarArticles = null,
     crossCategoryTitle = null
   } = ctx
-  const mock = CATEGORY_DATA[key] || null
-  const title = sanityCategory?.name?.trim() || mock?.title || 'Categoría'
-  const desc = sanityCategory?.description?.trim() || mock?.desc || ''
-  const thirdStat = mock?.stats?.[2] || { label: 'Secciones', val: '—' }
+  const title = sanityCategory?.name?.trim() || 'Categoría'
+  const desc = sanityCategory?.description?.trim() || ''
+  const thirdStat = { label: 'Secciones', val: '—' }
+  const cross = buildCrossCategorySidebar(crossCategorySidebarArticles, crossCategoryTitle)
 
   if (sanityArticles.length > 0) {
     const hero = mapDocToHero(sanityArticles[0], title)
@@ -148,75 +77,41 @@ export function mergeCategoriaPage(key, sanityCategory, sanityArticles, ctx = {}
     const stats = [
       { label: 'Artículos publicados', val: String(sanityArticles.length) },
       { label: 'Más reciente', val: latest },
-      { label: thirdStat.label, val: thirdStat.val }
+      thirdStat
     ]
-    const { sidebar, sidebarSectionTitle } = buildCrossCategorySidebar(
-      crossCategorySidebarArticles,
-      crossCategoryTitle
-    )
-
-    return { title, desc, stats, hero, items, sidebar, sidebarSectionTitle, feedEmpty: false }
+    return {
+      title,
+      desc,
+      stats,
+      hero,
+      items,
+      sidebar: cross.sidebar,
+      sidebarSectionTitle: cross.sidebarSectionTitle,
+      feedEmpty: false
+    }
   }
 
   if (tagFilterActive && sanityConfigured) {
-    const { sidebar, sidebarSectionTitle } = buildCrossCategorySidebar(
-      crossCategorySidebarArticles,
-      crossCategoryTitle
-    )
     return {
       title,
       desc,
-      stats: [
-        { label: 'Artículos publicados', val: '0' },
-        { label: 'Más reciente', val: '—' },
-        { label: thirdStat.label, val: thirdStat.val }
-      ],
+      stats: emptyStats(thirdStat),
       hero: null,
       items: [],
-      sidebar,
-      sidebarSectionTitle,
+      sidebar: cross.sidebar,
+      sidebarSectionTitle: cross.sidebarSectionTitle,
       feedEmpty: true
-    }
-  }
-
-  if (tagFilterActive && temaLabel) {
-    if (!mock) {
-      return {
-        title,
-        desc,
-        stats: [
-          { label: 'Artículos publicados', val: '0' },
-          { label: 'Más reciente', val: '—' },
-          thirdStat
-        ],
-        hero: null,
-        items: [],
-        sidebar: null,
-        sidebarSectionTitle: null,
-        feedEmpty: true
-      }
-    }
-    const { mockSlice, feedEmpty } = filterMockCategory(mock, temaLabel)
-    return {
-      title,
-      desc,
-      stats: mockSlice.stats,
-      hero: mockSlice.hero,
-      items: mockSlice.items,
-      sidebar: null,
-      sidebarSectionTitle: null,
-      feedEmpty
     }
   }
 
   return {
     title,
     desc,
-    stats: mock?.stats || [thirdStat],
-    hero: mock?.hero || null,
-    items: mock?.items || [],
-    sidebar: null,
-    sidebarSectionTitle: null,
-    feedEmpty: false
+    stats: emptyStats(thirdStat),
+    hero: null,
+    items: [],
+    sidebar: cross.sidebar,
+    sidebarSectionTitle: cross.sidebarSectionTitle,
+    feedEmpty: true
   }
 }

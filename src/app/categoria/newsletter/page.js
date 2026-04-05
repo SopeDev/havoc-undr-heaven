@@ -2,14 +2,8 @@ import Link from 'next/link'
 import SiteHeader from '../../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../../components/SiteFooter/SiteFooter'
 import NewsletterSignup from '../../../components/NewsletterSignup/NewsletterSignup'
-import {
-  CATEGORY_DATA,
-  CATEGORIA_TOPIC_FILTERS,
-  FOCO_ROWS,
-  VALID_CATEGORY_SLUGS
-} from '../categoriaMockData'
+import { DEFAULT_CATEGORY_TAB_LABELS, DEFAULT_CATEGORY_TAB_SLUGS } from '../categoriaConstants'
 import { fetchArticlesByCategorySlugLimited, fetchCategoryBySlug } from '../../../lib/sanity/articles'
-import { isSanityConfigured } from '../../../lib/sanity/client'
 import { fetchNewsletterIssuesForWeb } from '../../../lib/sanity/newsletterIssues'
 import { fetchFocosSidebarByUpdated } from '../../../lib/sanity/focos'
 import { fetchNavLists } from '../../../lib/sanity/navigation'
@@ -18,19 +12,13 @@ import styles from './page.module.css'
 
 export const revalidate = 60
 
-const MOCK_NEWSLETTER = CATEGORY_DATA.newsletter
+const DEFAULT_NEWSLETTER_TITLE = 'Newsletter'
+const SIDEBAR_SLUG_ANALISIS = 'analisis'
+const SIDEBAR_SLUG_REFLEXIONES = 'reflexiones'
 
 function parseTemaSlug(raw) {
   if (typeof raw !== 'string' || !raw.trim()) return null
   return raw.trim().toLowerCase()
-}
-
-function tagSlugsFromMockTopic(topicLabel) {
-  if (!topicLabel || typeof topicLabel !== 'string') return []
-  const hit = CATEGORIA_TOPIC_FILTERS.find(
-    f => f.label.toLowerCase() === topicLabel.trim().toLowerCase()
-  )
-  return hit ? [hit.slug] : []
 }
 
 function tagLineFromArticle(doc) {
@@ -40,41 +28,6 @@ function tagLineFromArticle(doc) {
 
 function readingTimeShort(mins) {
   return typeof mins === 'number' ? `${mins} min` : '—'
-}
-
-function mockIssuesFromFallback() {
-  const m = MOCK_NEWSLETTER
-  const slugFromHref = href =>
-    typeof href === 'string' && href.startsWith('/articulos/')
-      ? href.slice('/articulos/'.length)
-      : ''
-
-  const toArticle = row => ({
-    title: row.title,
-    slug: slugFromHref(row.href),
-    deck: row.deck || row.excerpt || '',
-    publishedAt: null,
-    readingTimeMinutes: null,
-    categoryName: row.cat || 'Newsletter',
-    tagNames: row.topic ? [row.topic] : [],
-    tagSlugs: tagSlugsFromMockTopic(row.topic)
-  })
-
-  const articles = [m.hero, ...m.items].map(toArticle).filter(a => a.slug)
-  const issueTitle =
-    typeof m.hero?.title === 'string' && m.hero.title.includes('—')
-      ? m.hero.title.split('—')[0].trim()
-      : 'Havoc Dispatch'
-
-  return [
-    {
-      _id: 'mock-newsletter-issue',
-      title: issueTitle,
-      issuedAt: '2026-02-28T12:00:00.000Z',
-      intro: m.hero?.deck || m.desc,
-      articles
-    }
-  ]
 }
 
 function articleSlugFromDoc(doc) {
@@ -105,7 +58,6 @@ function articleMatchesTemaSlug(doc, temaSlug) {
   return slugs.includes(temaSlug)
 }
 
-/** Article docs in this issue that pass tema + slug (same set as feed rows). */
 function visibleArticleDocsForIssue(issue, temaSlug) {
   if (!Array.isArray(issue.articles)) return []
   return issue.articles.filter(doc => {
@@ -115,10 +67,6 @@ function visibleArticleDocsForIssue(issue, temaSlug) {
   })
 }
 
-/**
- * Count tag appearances across articles (each tag at most once per article).
- * Sort: higher count first, then name A–Z (es).
- */
 function aggregateIssueThemes(articleDocs) {
   const counts = new Map()
   for (const doc of articleDocs) {
@@ -154,32 +102,6 @@ function formatPiezasLabel(n) {
   return `${k} piezas`
 }
 
-function mockSidebarItemsFromCategorySlug(slug) {
-  const mock = CATEGORY_DATA[slug]
-  if (!mock) return []
-  const rows = []
-  if (mock.hero) {
-    rows.push({
-      tags: mock.hero.topic,
-      title: mock.hero.title,
-      date: mock.hero.date,
-      href: mock.hero.href
-    })
-  }
-  if (mock.items) {
-    for (const item of mock.items) {
-      if (rows.length >= 3) break
-      rows.push({
-        tags: item.topic,
-        title: item.title,
-        date: item.date,
-        href: item.href
-      })
-    }
-  }
-  return rows.slice(0, 3)
-}
-
 function mapDocsToSidebarRows(docs) {
   return docs.map(d => ({
     tags: tagLineFromArticle(d) || '—',
@@ -189,24 +111,15 @@ function mapDocsToSidebarRows(docs) {
   }))
 }
 
-/** CMS category slugs (only editorial lanes + newsletter + redes in mock). */
-const SIDEBAR_SLUG_ANALISIS = 'analisis'
-const SIDEBAR_SLUG_REFLEXIONES = 'reflexiones'
-
 function newsletterSidebarSectionTitle(nav, resolvedSlug, fallbackTitle) {
   const entry = nav.categories?.find(c => c.slug === resolvedSlug)
   return entry?.name || fallbackTitle
 }
 
 export async function generateMetadata() {
-  let title = MOCK_NEWSLETTER.title
-  let description = MOCK_NEWSLETTER.desc
-
-  if (isSanityConfigured()) {
-    const c = await fetchCategoryBySlug('newsletter')
-    if (c?.name) title = c.name
-    if (c?.description) description = c.description
-  }
+  const c = await fetchCategoryBySlug('newsletter')
+  const title = c?.name?.trim() || DEFAULT_NEWSLETTER_TITLE
+  const description = c?.description?.trim() || ''
 
   return {
     title: `${title} — HAVOC UNDR HEAVEN`,
@@ -219,54 +132,35 @@ export default async function NewsletterArchivePage({ searchParams }) {
   const sp = await searchParams
   const rawTema = parseTemaSlug(Array.isArray(sp?.tema) ? sp.tema[0] : sp?.tema)
 
-  const sanityOn = isSanityConfigured()
-  let nav = { categories: [], tags: [] }
-  let focoSidebarRows = FOCO_ROWS
-  let issues = []
-  let sanityCategory = null
+  const [nav, focoSidebarCms, issues, sanityCategory, analisisDocs, reflexionesDocs] =
+    await Promise.all([
+      fetchNavLists(),
+      fetchFocosSidebarByUpdated(4),
+      fetchNewsletterIssuesForWeb(),
+      fetchCategoryBySlug('newsletter'),
+      fetchArticlesByCategorySlugLimited(SIDEBAR_SLUG_ANALISIS, 3),
+      fetchArticlesByCategorySlugLimited(SIDEBAR_SLUG_REFLEXIONES, 3)
+    ])
 
-  let analisisSidebarItems = []
-  let reflexionSidebarItems = []
-  const analisisArchiveSlug = SIDEBAR_SLUG_ANALISIS
-  const reflexionArchiveSlug = SIDEBAR_SLUG_REFLEXIONES
-
-  if (sanityOn) {
-    const [navLists, focoSidebarCms, fetchedIssues, cat, analisisDocs, reflexionesDocs] =
-      await Promise.all([
-        fetchNavLists(),
-        fetchFocosSidebarByUpdated(4),
-        fetchNewsletterIssuesForWeb(),
-        fetchCategoryBySlug('newsletter'),
-        fetchArticlesByCategorySlugLimited(SIDEBAR_SLUG_ANALISIS, 3),
-        fetchArticlesByCategorySlugLimited(SIDEBAR_SLUG_REFLEXIONES, 3)
-      ])
-    nav = navLists
-    if (focoSidebarCms.length > 0) focoSidebarRows = focoSidebarCms
-    issues = fetchedIssues
-    sanityCategory = cat
-    analisisSidebarItems = mapDocsToSidebarRows(analisisDocs)
-    reflexionSidebarItems = mapDocsToSidebarRows(reflexionesDocs)
-  } else {
-    issues = mockIssuesFromFallback()
-    analisisSidebarItems = mockSidebarItemsFromCategorySlug(SIDEBAR_SLUG_ANALISIS)
-    reflexionSidebarItems = mockSidebarItemsFromCategorySlug(SIDEBAR_SLUG_REFLEXIONES)
-  }
+  const focoSidebarRows = focoSidebarCms
+  const analisisSidebarItems = mapDocsToSidebarRows(analisisDocs)
+  const reflexionSidebarItems = mapDocsToSidebarRows(reflexionesDocs)
 
   const temaSlug =
     rawTema && nav.tags.some(t => t.slug === rawTema) ? rawTema : null
 
-  const pageTitle = sanityCategory?.name || MOCK_NEWSLETTER.title
-  const pageDesc = sanityCategory?.description || MOCK_NEWSLETTER.desc
+  const pageTitle = sanityCategory?.name?.trim() || DEFAULT_NEWSLETTER_TITLE
+  const pageDesc = sanityCategory?.description?.trim() || ''
 
   const analisisAsideTitle = newsletterSidebarSectionTitle(
     nav,
-    analisisArchiveSlug,
-    CATEGORY_DATA.analisis?.title || 'Análisis'
+    SIDEBAR_SLUG_ANALISIS,
+    DEFAULT_CATEGORY_TAB_LABELS[SIDEBAR_SLUG_ANALISIS] || 'Análisis'
   )
   const reflexionAsideTitle = newsletterSidebarSectionTitle(
     nav,
-    reflexionArchiveSlug,
-    'Reflexiones'
+    SIDEBAR_SLUG_REFLEXIONES,
+    DEFAULT_CATEGORY_TAB_LABELS[SIDEBAR_SLUG_REFLEXIONES] || 'Reflexiones'
   )
 
   const editionCount = String(issues.length)
@@ -296,6 +190,14 @@ export default async function NewsletterArchivePage({ searchParams }) {
   const showTemaEmptyMessage =
     Boolean(temaSlug) && issues.length > 0 && !issueBundles.some(b => b.safeRows.length > 0)
 
+  const tabCategories =
+    nav.categories.length > 0
+      ? nav.categories
+      : DEFAULT_CATEGORY_TAB_SLUGS.map(slug => ({
+          name: DEFAULT_CATEGORY_TAB_LABELS[slug] || slug,
+          slug
+        }))
+
   return (
     <>
       <SiteHeader />
@@ -312,13 +214,7 @@ export default async function NewsletterArchivePage({ searchParams }) {
         <Link href='/' className='section-tab' aria-label='Todo'>
           Todo
         </Link>
-        {(nav.categories.length > 0
-          ? nav.categories
-          : VALID_CATEGORY_SLUGS.map(slug => ({
-              name: CATEGORY_DATA[slug]?.title || slug,
-              slug
-            }))
-        ).map(c => (
+        {tabCategories.map(c => (
           <Link
             key={c.slug}
             href={`/categoria/${c.slug}`}
@@ -465,7 +361,7 @@ export default async function NewsletterArchivePage({ searchParams }) {
             ) : (
               <p className={styles.sidebarAsideEmpty}>
                 Sin piezas recientes.{' '}
-                <Link href={`/categoria/${analisisArchiveSlug}`}>Ver archivo de Análisis</Link>
+                <Link href={`/categoria/${SIDEBAR_SLUG_ANALISIS}`}>Ver archivo de Análisis</Link>
               </p>
             )}
           </div>
@@ -485,7 +381,7 @@ export default async function NewsletterArchivePage({ searchParams }) {
             ) : (
               <p className={styles.sidebarAsideEmpty}>
                 Sin piezas recientes.{' '}
-                <Link href={`/categoria/${reflexionArchiveSlug}`}>Ver archivo de Reflexiones</Link>
+                <Link href={`/categoria/${SIDEBAR_SLUG_REFLEXIONES}`}>Ver archivo de Reflexiones</Link>
               </p>
             )}
           </div>

@@ -1,6 +1,9 @@
 import { isArticleWithheldFromWeb } from './articleVisibility'
 import { getSanityClient } from './client'
-import { newsletterIssuesForWebQuery } from './queries'
+import { formatArticleDate } from './articleView'
+import { newsletterIssuesForWebQuery, newsletterIssuesHomeDispatchesQuery } from './queries'
+
+const HOME_DISPATCH_INTRO_MAX = 220
 
 function isUsableArticleForNewsletterFeed(doc) {
   if (!doc || doc._type !== 'article') return false
@@ -27,4 +30,46 @@ export async function fetchNewsletterIssuesForWeb() {
     ...issue,
     articles: visibleArticlesInIssue(issue)
   }))
+}
+
+function truncateForCard(text, max = HOME_DISPATCH_INTRO_MAX) {
+  const t = typeof text === 'string' ? text.trim() : ''
+  if (!t) return ''
+  if (t.length <= max) return t
+  const cut = t.slice(0, max)
+  const lastSpace = cut.lastIndexOf(' ')
+  return `${(lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trim()}…`
+}
+
+/**
+ * Maps a sent newsletter issue to the homepage Despachos card shape.
+ * @param {Record<string, unknown>} issue
+ * @returns {{ cat: string, topic: string, title: string, body: string, href: string } | null}
+ */
+export function mapNewsletterIssueToHomeDispatchItem(issue) {
+  if (!issue || typeof issue._id !== 'string') return null
+  const intro = typeof issue.intro === 'string' ? issue.intro.trim() : ''
+  const fallbackBody =
+    'Resumen semanal de geopolítica y el tablero internacional. Ver la edición en el archivo.'
+  const body = truncateForCard(intro) || fallbackBody
+  const title =
+    (typeof issue.title === 'string' && issue.title.trim()) || 'Havoc Dispatch'
+  return {
+    cat: 'Dispatch',
+    topic: formatArticleDate(issue.issuedAt),
+    title,
+    body,
+    href: `/categoria/newsletter#issue-${issue._id}`
+  }
+}
+
+/**
+ * @returns {Promise<Array<{ cat: string, topic: string, title: string, body: string, href: string }>>}
+ */
+export async function fetchHomeDispatchItems() {
+  const client = getSanityClient()
+  if (!client) return []
+  const rows = await client.fetch(newsletterIssuesHomeDispatchesQuery)
+  if (!Array.isArray(rows)) return []
+  return rows.map(mapNewsletterIssueToHomeDispatchItem).filter(Boolean)
 }

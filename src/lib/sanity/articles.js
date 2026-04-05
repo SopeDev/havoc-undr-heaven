@@ -48,9 +48,6 @@ export async function fetchRelatedArticles(slug) {
   return client.fetch(relatedArticlesQuery, { slug })
 }
 
-/**
- * @returns {Array<{ cat: string, tags: string, title: string, excerpt: string, date: string, ts: number, time: string, url: string, source: string }>}
- */
 export async function fetchCategoryBySlug(slug) {
   const client = getSanityClient()
   if (!client) return null
@@ -82,6 +79,9 @@ export async function fetchArticlesByCategorySlugLimited(categorySlug, limit = 3
   return client.fetch(articlesByCategorySlugLimitedQuery, { categorySlug, limit: n })
 }
 
+/**
+ * @returns {Array<{ cat: string, tags: string, title: string, excerpt: string, date: string, ts: number, time: string, url: string }>}
+ */
 export async function fetchArticlesForSearch() {
   const client = getSanityClient()
   if (!client) return []
@@ -102,8 +102,7 @@ export async function fetchArticlesForSearch() {
       date: formatArticleDate(publishedAt),
       ts: sec,
       time,
-      url: `/articulos/${doc.slug}`,
-      source: 'sanity'
+      url: `/articulos/${doc.slug}`
     }
   })
 }
