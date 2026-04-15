@@ -30,12 +30,20 @@ const isDryRun = req => {
   return envDry || queryDry
 }
 
-const isAuthorized = req => {
-  const secret = process.env.NEWSLETTER_CRON_SECRET?.trim()
-  if (!secret) return false
+const bearerToken = req => {
   const auth = req.headers.get('authorization') || ''
-  const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : ''
-  return token === secret
+  return auth.startsWith('Bearer ') ? auth.slice(7).trim() : ''
+}
+
+/** Vercel Cron and manual calls: `Authorization: Bearer ${CRON_SECRET}`. */
+const isAuthorized = req => {
+  const secret = process.env.CRON_SECRET?.trim()
+  if (!secret) return false
+  return bearerToken(req) === secret
+}
+
+export async function GET(req) {
+  return POST(req)
 }
 
 export async function POST(req) {
