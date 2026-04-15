@@ -11,7 +11,6 @@ export const articleBySlugQuery = groq`
     readingTimeMinutes,
     includeInWeeklyNewsletter,
     releasedToWebAt,
-    isNewsletterEdition,
     coverImage{
       asset,
       alt
@@ -244,7 +243,7 @@ export const articlesForFocoTagsQuery = groq`
     deck,
     publishedAt,
     readingTimeMinutes,
-    isNewsletterEdition,
+    includeInWeeklyNewsletter,
     "categoryName": category->name
   }
 `
@@ -286,5 +285,73 @@ export const newsletterIssuesHomeDispatchesQuery = groq`
     issuedAt,
     intro,
     "slug": slug.current
+  }
+`
+
+export const latestNewsletterIssueForEmailQuery = groq`
+  *[_type == "newsletterIssue" && defined(issuedAt)] | order(issuedAt desc)[0] {
+    _id,
+    _rev,
+    title,
+    issuedAt,
+    intro,
+    sendStatus,
+    emailSentAt,
+    sendAttemptCount,
+    lastDispatchKey,
+    "articles": articles[]->{
+      _id,
+      _type,
+      title,
+      "slug": slug.current,
+      deck,
+      publishedAt,
+      readingTimeMinutes,
+      includeInWeeklyNewsletter,
+      releasedToWebAt,
+      "categoryName": category->name,
+      "tagNames": tags[]->name,
+      coverImage{
+        asset,
+        alt
+      }
+    }
+  }
+`
+
+export const nextNewsletterIssueForDispatchQuery = groq`
+  *[
+    _type == "newsletterIssue" &&
+    defined(issuedAt) &&
+    issuedAt <= now() &&
+    !defined(emailSentAt) &&
+    (!defined(sendStatus) || sendStatus in ["ready", "failed", "draft"])
+  ] | order(issuedAt asc)[0] {
+    _id,
+    _rev,
+    title,
+    issuedAt,
+    intro,
+    sendStatus,
+    emailSentAt,
+    sendAttemptCount,
+    lastDispatchKey,
+    "articles": articles[]->{
+      _id,
+      _type,
+      title,
+      "slug": slug.current,
+      deck,
+      publishedAt,
+      readingTimeMinutes,
+      includeInWeeklyNewsletter,
+      releasedToWebAt,
+      "categoryName": category->name,
+      "tagNames": tags[]->name,
+      coverImage{
+        asset,
+        alt
+      }
+    }
   }
 `

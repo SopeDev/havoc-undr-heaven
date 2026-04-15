@@ -47,15 +47,63 @@ export default defineType({
       description:
         'Cuándo se completó el envío por correo. Vacío = borrador (no aparece en Despachos ni archivo público). Suele completarse el job del lunes o manualmente.',
       type: 'datetime'
+    }),
+    defineField({
+      name: 'sendStatus',
+      title: 'Estado de envío',
+      type: 'string',
+      initialValue: 'draft',
+      options: {
+        list: [
+          { title: 'Draft', value: 'draft' },
+          { title: 'Ready', value: 'ready' },
+          { title: 'Sending', value: 'sending' },
+          { title: 'Sent', value: 'sent' },
+          { title: 'Failed', value: 'failed' }
+        ],
+        layout: 'radio'
+      }
+    }),
+    defineField({
+      name: 'sendAttemptCount',
+      title: 'Intentos de envío',
+      type: 'number',
+      initialValue: 0
+    }),
+    defineField({
+      name: 'lastSendAttemptAt',
+      title: 'Último intento de envío',
+      type: 'datetime',
+      readOnly: true
+    }),
+    defineField({
+      name: 'lastSentMessageId',
+      title: 'Último message ID (Resend)',
+      type: 'string',
+      readOnly: true
+    }),
+    defineField({
+      name: 'lastDispatchKey',
+      title: 'Última clave de despacho',
+      type: 'string',
+      readOnly: true
+    }),
+    defineField({
+      name: 'lastSendError',
+      title: 'Último error de envío',
+      type: 'text',
+      rows: 3,
+      readOnly: true
     })
   ],
   preview: {
-    select: { title: 'title', sent: 'emailSentAt', issued: 'issuedAt' },
-    prepare({ title, sent, issued }) {
+    select: { title: 'title', sent: 'emailSentAt', issued: 'issuedAt', sendStatus: 'sendStatus' },
+    prepare({ title, sent, issued, sendStatus }) {
       const date = issued ? new Date(issued).toLocaleDateString('es') : ''
+      const status = sendStatus || (sent ? 'sent' : 'draft')
       return {
         title: title || 'Sin título',
-        subtitle: sent ? `Enviado · ${date}` : `Borrador · ${date}`
+        subtitle: `${status.toUpperCase()} · ${date}`
       }
     }
   },

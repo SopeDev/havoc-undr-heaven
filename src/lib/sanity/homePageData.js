@@ -1,3 +1,9 @@
+import {
+  getHottestSidebarRawDocs,
+  HOTTEST_ASIDE_LIMIT,
+  HOTTEST_SANITY_POOL,
+  isUmamiAnalyticsConfigured
+} from '../umami/hottestArticles'
 import { formatArticleDate } from './articleView'
 import { fetchHomeArticles } from './articles'
 import { fetchFocosSidebarByUpdated } from './focos'
@@ -34,9 +40,11 @@ export function partitionHomeArticles(rows) {
 }
 
 export async function fetchHomePageData() {
+  const articleLimit = isUmamiAnalyticsConfigured() ? HOTTEST_SANITY_POOL : 8
+
   const [nav, docs, focos, dispatchItems] = await Promise.all([
     fetchNavLists(),
-    fetchHomeArticles(8),
+    fetchHomeArticles(articleLimit),
     fetchFocosSidebarByUpdated(5),
     fetchHomeDispatchItems()
   ])
@@ -56,7 +64,18 @@ export async function fetchHomePageData() {
     }))
   }
 
-  const { hero, feedItems, sidebarArticles } = partitionHomeArticles(articleRows)
+  const { hero, feedItems, sidebarArticles: partitionSidebar } = partitionHomeArticles(articleRows)
+
+  let sidebarArticles = partitionSidebar
+  if (isUmamiAnalyticsConfigured() && Array.isArray(docs) && docs.length > 0) {
+    const heroSlug = articleRows[0]?.href?.replace(/^\/articulos\//, '') || null
+    const feedSlugs = articleRows.slice(1, 5).map(r => r.href?.replace(/^\/articulos\//, '') || '')
+    const excluded = new Set([heroSlug, ...feedSlugs].filter(Boolean))
+    const hottestDocs = await getHottestSidebarRawDocs(docs, excluded, HOTTEST_ASIDE_LIMIT)
+    if (hottestDocs.length > 0) {
+      sidebarArticles = hottestDocs.map(mapRawDocToHomeRow)
+    }
+  }
 
   return {
     categories,

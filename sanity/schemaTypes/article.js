@@ -68,14 +68,6 @@ export default defineType({
       type: 'datetime'
     }),
     defineField({
-      name: 'isNewsletterEdition',
-      title: 'Edición newsletter (legacy)',
-      description:
-        'Campo histórico. El flujo actual usa “Incluir en el Dispatch semanal” + documentos “Edición newsletter (Dispatch)”. Dejá en false salvo contenido antiguo que dependa de esto.',
-      type: 'boolean',
-      initialValue: false
-    }),
-    defineField({
       name: 'body',
       title: 'Body',
       type: 'blockContent'

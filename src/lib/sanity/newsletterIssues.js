@@ -1,7 +1,13 @@
 import { isArticleWithheldFromWeb } from './articleVisibility'
 import { getSanityClient } from './client'
+import { urlForImage } from './image'
 import { formatArticleDate } from './articleView'
-import { newsletterIssuesForWebQuery, newsletterIssuesHomeDispatchesQuery } from './queries'
+import {
+  latestNewsletterIssueForEmailQuery,
+  nextNewsletterIssueForDispatchQuery,
+  newsletterIssuesForWebQuery,
+  newsletterIssuesHomeDispatchesQuery
+} from './queries'
 
 const HOME_DISPATCH_INTRO_MAX = 220
 
@@ -12,10 +18,23 @@ function isUsableArticleForNewsletterFeed(doc) {
   return !isArticleWithheldFromWeb(doc)
 }
 
+/** Email + cron dispatch: include weekly-withheld pieces (released on successful send). */
+function isUsableArticleForDispatch(doc) {
+  if (!doc || doc._type !== 'article') return false
+  const slug = typeof doc.slug === 'string' ? doc.slug.trim() : ''
+  return Boolean(slug)
+}
+
 function visibleArticlesInIssue(issue) {
   const raw = issue?.articles
   if (!Array.isArray(raw)) return []
   return raw.filter(isUsableArticleForNewsletterFeed)
+}
+
+function articlesInIssueForDispatch(issue) {
+  const raw = issue?.articles
+  if (!Array.isArray(raw)) return []
+  return raw.filter(isUsableArticleForDispatch)
 }
 
 /**
@@ -72,4 +91,34 @@ export async function fetchHomeDispatchItems() {
   const rows = await client.fetch(newsletterIssuesHomeDispatchesQuery)
   if (!Array.isArray(rows)) return []
   return rows.map(mapNewsletterIssueToHomeDispatchItem).filter(Boolean)
+}
+
+export async function fetchLatestNewsletterIssueForEmail() {
+  const client = getSanityClient()
+  if (!client) return null
+  const issue = await client.fetch(latestNewsletterIssueForEmailQuery)
+  if (!issue || typeof issue !== 'object') return null
+  const articles = articlesInIssueForDispatch(issue).map(doc => ({
+    ...doc,
+    coverUrl: urlForImage(doc.coverImage) || null
+  }))
+  return {
+    ...issue,
+    articles
+  }
+}
+
+export async function fetchNextNewsletterIssueForDispatch() {
+  const client = getSanityClient()
+  if (!client) return null
+  const issue = await client.fetch(nextNewsletterIssueForDispatchQuery)
+  if (!issue || typeof issue !== 'object') return null
+  const articles = articlesInIssueForDispatch(issue).map(doc => ({
+    ...doc,
+    coverUrl: urlForImage(doc.coverImage) || null
+  }))
+  return {
+    ...issue,
+    articles
+  }
 }

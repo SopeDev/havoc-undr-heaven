@@ -2,6 +2,8 @@ import Link from 'next/link'
 import SiteHeader from '../../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../../components/SiteFooter/SiteFooter'
 import NewsletterSignup from '../../../components/NewsletterSignup/NewsletterSignup'
+import NewsletterConfirmWelcomeModal from '../../../components/NewsletterConfirmWelcomeModal/NewsletterConfirmWelcomeModal'
+import { NEWSLETTER_SUBSCRIBE_STATUSES } from '../../../lib/newsletter/constants'
 import { DEFAULT_CATEGORY_TAB_LABELS, DEFAULT_CATEGORY_TAB_SLUGS } from '../categoriaConstants'
 import { fetchArticlesByCategorySlugLimited, fetchCategoryBySlug } from '../../../lib/sanity/articles'
 import { fetchNewsletterIssuesForWeb } from '../../../lib/sanity/newsletterIssues'
@@ -19,6 +21,35 @@ const SIDEBAR_SLUG_REFLEXIONES = 'reflexiones'
 function parseTemaSlug(raw) {
   if (typeof raw !== 'string' || !raw.trim()) return null
   return raw.trim().toLowerCase()
+}
+
+function parseSubscribeStatus(raw) {
+  if (typeof raw !== 'string') return null
+  const status = raw.trim().toLowerCase()
+  if (
+    status === NEWSLETTER_SUBSCRIBE_STATUSES.CONFIRMED ||
+    status === NEWSLETTER_SUBSCRIBE_STATUSES.INVALID ||
+    status === NEWSLETTER_SUBSCRIBE_STATUSES.ERROR
+  ) {
+    return status
+  }
+  return null
+}
+
+function subscribeStatusNotice(status) {
+  if (status === NEWSLETTER_SUBSCRIBE_STATUSES.INVALID) {
+    return {
+      tone: 'warn',
+      text: 'El enlace de confirmación no es válido o venció. Podés volver a suscribirte con tu email.'
+    }
+  }
+  if (status === NEWSLETTER_SUBSCRIBE_STATUSES.ERROR) {
+    return {
+      tone: 'error',
+      text: 'No pudimos confirmar tu suscripción en este intento. Probá nuevamente en unos minutos.'
+    }
+  }
+  return null
 }
 
 function tagLineFromArticle(doc) {
@@ -131,6 +162,8 @@ export async function generateMetadata() {
 export default async function NewsletterArchivePage({ searchParams }) {
   const sp = await searchParams
   const rawTema = parseTemaSlug(Array.isArray(sp?.tema) ? sp.tema[0] : sp?.tema)
+  const subscribeStatus = parseSubscribeStatus(Array.isArray(sp?.subscribe) ? sp.subscribe[0] : sp?.subscribe)
+  const subscribeNotice = subscribeStatusNotice(subscribeStatus)
 
   const [nav, focoSidebarCms, issues, sanityCategory, analisisDocs, reflexionesDocs] =
     await Promise.all([
@@ -201,6 +234,13 @@ export default async function NewsletterArchivePage({ searchParams }) {
   return (
     <>
       <SiteHeader />
+      <NewsletterConfirmWelcomeModal subscribeStatus={subscribeStatus} />
+
+      {subscribeNotice ? (
+        <div className={`newsletter-status-banner newsletter-status-banner--${subscribeNotice.tone}`}>
+          {subscribeNotice.text}
+        </div>
+      ) : null}
 
       <div className='breadcrumb'>
         <span>

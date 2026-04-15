@@ -177,7 +177,7 @@ function titleLinesFromDoc(doc) {
 }
 
 function archivoCatFromArticle(row) {
-  if (row.isNewsletterEdition) return 'Newsletter'
+  if (row.includeInWeeklyNewsletter === true) return 'Newsletter'
   const n = row.categoryName || 'Análisis'
   if (n === 'Reflexiones' || n === 'Reflexión') return 'Reflexiones'
   if (n === 'Newsletter' || n === 'Análisis') return n

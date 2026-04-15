@@ -75,6 +75,7 @@ nav {
 }
 
 .nav-subscribe {
+  background: transparent;
   font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -83,6 +84,8 @@ nav {
   border: 1px solid #444;
   padding: 7px 18px;
   transition: all 0.2s;
+  cursor: pointer;
+  font-family: var(--font-body);
 }
 
 .nav-subscribe:hover {
@@ -225,6 +228,11 @@ nav {
   border: 1px solid #2A2A2A;
 }
 
+.newsletter-box--modal {
+  border: none;
+  padding: 0;
+}
+
 .newsletter-box h3 {
   font-family: var(--font-display);
   font-size: 20px;
@@ -268,6 +276,91 @@ nav {
   font-weight: 700;
   cursor: pointer;
   font-family: var(--font-body);
+}
+
+.newsletter-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: rgba(0, 0, 0, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.newsletter-modal {
+  width: 100%;
+  max-width: 520px;
+  background: var(--dark);
+  border: 1px solid #2A2A2A;
+  padding: 26px 22px 22px;
+  position: relative;
+}
+
+.newsletter-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: #888;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.newsletter-modal-close:hover {
+  color: #FFFFFF;
+}
+
+.newsletter-modal--welcome {
+  max-width: 560px;
+  padding: 34px 26px 26px;
+}
+
+.newsletter-welcome-kicker {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.newsletter-welcome-title {
+  font-family: var(--font-serif);
+  font-size: 38px;
+  line-height: 1.1;
+  color: #FFFFFF;
+  margin: 0 0 12px;
+}
+
+.newsletter-welcome-copy {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #BEBEBE;
+  margin: 0 0 12px;
+}
+
+.newsletter-status-banner {
+  margin: 12px 48px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  font-size: 11px;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+}
+
+.newsletter-status-banner--warn {
+  color: #8A5A00;
+  background: #FFF7E7;
+  border-color: #F0D9A3;
+}
+
+.newsletter-status-banner--error {
+  color: #A5290F;
+  background: #FDF1EF;
+  border-color: #F0C1B8;
 }
 
 /* ── FOOTER ── */
@@ -355,22 +448,22 @@ footer {
 
 /* ── ROW 1: CONTENT TYPE BAR — white bg, strong border ── */
 .type-bar {
-  border-bottom: 3px solid var(--text);
+  border-bottom: 3px solid #2A2A2A;
   padding: 0 48px;
   display: flex;
   justify-content: stretch;
   align-items: stretch;
   min-width: 0;
-  background: var(--white);
+  background: var(--black);
 }
 
 .type-item {
   font-size: 11px;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--white);
   padding: 14px 0;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid #2A2A2A;
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 600;
@@ -392,14 +485,14 @@ footer {
   gap: 0;
   flex-shrink: 0;
   padding: 0 0 0 20px;
-  border-left: 1px solid var(--border);
+  border-left: 1px solid #2A2A2A;
 }
 
 .type-bar-search input {
   background: transparent;
   border: none;
   outline: none;
-  color: var(--text);
+  color: var(--white);
   font-size: 10px;
   letter-spacing: 1.5px;
   font-family: var(--font-body);
@@ -409,14 +502,14 @@ footer {
 }
 
 .type-bar-search input::placeholder {
-  color: var(--muted);
+  color: #777;
 }
 
 .type-bar-search button {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--muted);
+  color: #AAA;
   font-size: 14px;
   padding: 0 0 0 8px;
   transition: color 0.2s;
@@ -424,15 +517,15 @@ footer {
 }
 
 .type-bar-search button:hover {
-  color: var(--text);
+  color: var(--white);
 }
 
 .type-item:hover {
-  color: var(--text);
+  color: var(--white);
 }
 
 .type-item.active {
-  color: var(--text);
+  color: var(--white);
 }
 
 .type-item.active::after {
@@ -442,7 +535,7 @@ footer {
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--text);
+  background: var(--white);
 }
 
 /* ── ROW 2: REGIONAL BAR — off-white, lighter weight ── */
@@ -2163,6 +2256,28 @@ a.dispatch-card:hover .dispatch-title {
     font-size: 9px;
   }
 
+  .newsletter-modal-overlay {
+    padding: 12px;
+  }
+
+  .newsletter-modal {
+    padding: 24px 16px 16px;
+  }
+
+  .newsletter-modal--welcome {
+    padding: 28px 16px 16px;
+  }
+
+  .newsletter-welcome-title {
+    font-size: 32px;
+  }
+
+  .newsletter-status-banner {
+    margin: 10px 12px 0;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
   .masthead {
     padding: 8px 16px 10px;
   }
@@ -2454,6 +2569,51 @@ a.dispatch-card:hover .dispatch-title {
   border-color: var(--black);
 }
 
+@media (max-width: 900px) {
+  .tema-header {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    align-items: stretch;
+    padding: 28px 20px 24px;
+  }
+
+  .tema-title {
+    font-size: clamp(32px, 10vw, 56px);
+    letter-spacing: 2px;
+    line-height: 0.95;
+    margin-bottom: 12px;
+  }
+
+  .tema-desc {
+    max-width: none;
+    padding-top: 14px;
+  }
+
+  .tema-stats {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .tema-stat {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+
+  .related-bar {
+    padding: 14px 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .tema-header {
+    padding: 24px 16px 20px;
+  }
+
+  .related-bar {
+    padding: 12px 16px;
+  }
+}
+
 .tema-body {
   max-width: 1200px;
   margin: 0 auto;
@@ -2735,10 +2895,10 @@ a.feed-filter {
 
 /* ── CATEGORY PAGE ( /categoria/[categoria] ) ── */
 .section-tabs {
-  border-bottom: 2px solid var(--text);
+  border-bottom: 2px solid #2A2A2A;
   padding: 0;
   display: flex;
-  background: var(--white);
+  background: var(--black);
   position: sticky;
   top: 52px;
   z-index: 90;
@@ -2750,11 +2910,11 @@ a.feed-filter {
   text-transform: uppercase;
   font-weight: 600;
   padding: 14px 0;
-  color: var(--muted);
+  color: var(--white);
   cursor: pointer;
   transition: color 0.2s;
-  border-right: 1px solid var(--border);
-  border-left: 1px solid var(--border);
+  border-right: 1px solid #2A2A2A;
+  border-left: 1px solid #2A2A2A;
   position: relative;
   white-space: nowrap;
   flex: 1;
@@ -2770,11 +2930,11 @@ a.feed-filter {
 }
 
 .section-tab:hover {
-  color: var(--text);
+  color: var(--white);
 }
 
 .section-tab.active {
-  color: var(--text);
+  color: var(--white);
 }
 
 .section-tab.active::after {
@@ -2784,7 +2944,7 @@ a.feed-filter {
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--text);
+  background: var(--white);
 }
 
 .cat-header {

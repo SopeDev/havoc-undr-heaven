@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import NewsletterSignupModal from '../NewsletterSignupModal/NewsletterSignupModal'
 
 const NAV_ITEMS = [
   { id: 'inicio', label: 'Inicio', href: '/' },
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
 export default function SiteHeader() {
   const pathname = usePathname()
   const [openMenu, setOpenMenu] = useState(null)
+  const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false)
   const dropdownRootRef = useRef(null)
   const searchInputRef = useRef(null)
 
@@ -88,9 +90,9 @@ export default function SiteHeader() {
           </li>
         </ul>
 
-        <Link href='/api/newsletter/subscribe' className='nav-subscribe'>
+        <button className='nav-subscribe' type='button' onClick={() => setIsNewsletterModalOpen(true)}>
           Suscribirse
-        </Link>
+        </button>
       </nav>
 
       <div className='masthead'>
@@ -102,6 +104,11 @@ export default function SiteHeader() {
         <img className='masthead-logo' src='/images/havoc_logo.png' alt='HAVOC UNDR HEAVEN' />
         <div className='masthead-catchphrase'>El nuevo orden mundial está aquí</div>
       </div>
+
+      <NewsletterSignupModal
+        isOpen={isNewsletterModalOpen}
+        onClose={() => setIsNewsletterModalOpen(false)}
+      />
     </>
   )
 }
