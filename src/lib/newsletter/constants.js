@@ -1,6 +1,8 @@
 export const NEWSLETTER_SUBSCRIBE_STATUSES = {
-  CONFIRMATION_SENT: 'confirmation_sent',
   ALREADY_SUBSCRIBED: 'already_subscribed',
+  /** Immediate subscribe succeeded (contact created in Resend). */
+  SUBSCRIBED: 'subscribed',
+  /** Legacy double opt-in link completed (kept for old confirmation URLs). */
   CONFIRMED: 'confirmed',
   INVALID: 'invalid',
   ERROR: 'error'

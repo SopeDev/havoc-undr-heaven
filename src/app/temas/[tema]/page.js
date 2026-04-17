@@ -3,15 +3,24 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import SiteHeader from '../../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../../components/SiteFooter/SiteFooter'
-import NewsletterSignup from '../../../components/NewsletterSignup/NewsletterSignup'
+import FeedLoadMore from '../../../components/FeedLoadMore/FeedLoadMore'
+import NewsletterSidebarBlock from '../../../components/NewsletterSidebarBlock/NewsletterSidebarBlock'
+import NewsletterArticleLink from '../../../components/NewsletterArticleLink/NewsletterArticleLink'
 import { fetchTemaPageData } from '../../../lib/sanity/temas'
+import { fetchFocosSidebarByUpdated } from '../../../lib/sanity/focos'
+import { fetchSpotlightSidebarArticles } from '../../../lib/sanity/homePageData'
 import { fetchNavLists } from '../../../lib/sanity/navigation'
 
 export const revalidate = 60
 
 const loadTemaPage = cache(async temaSlug => {
-  const [cms, nav] = await Promise.all([fetchTemaPageData(temaSlug), fetchNavLists()])
-  return { cms, nav }
+  const [cms, nav, spotlightArticles, focoSidebarCms] = await Promise.all([
+    fetchTemaPageData(temaSlug),
+    fetchNavLists(),
+    fetchSpotlightSidebarArticles(),
+    fetchFocosSidebarByUpdated(4)
+  ])
+  return { cms, nav, spotlightArticles, focoSidebarCms }
 })
 
 export async function generateMetadata({ params }) {
@@ -30,11 +39,12 @@ export async function generateMetadata({ params }) {
 
 export default async function TemaPage({ params }) {
   const { tema: temaSlug } = await params
-  const { cms: tema, nav } = await loadTemaPage(temaSlug)
+  const { cms: tema, nav, spotlightArticles, focoSidebarCms } = await loadTemaPage(temaSlug)
   if (!tema) notFound()
 
+  const focoSidebarRows = focoSidebarCms
+
   const hasHero = tema.hero !== null && tema.hero !== undefined
-  const hasArticles = tema.articles.length > 0
 
   return (
     <>
@@ -65,7 +75,7 @@ export default async function TemaPage({ params }) {
         </Link>
       </div>
 
-      <div className='region-bar'>
+      <div className='region-bar region-bar--tema'>
         <span className='region-item'>Temas</span>
         {nav.tags.map(t => (
           <Link
@@ -130,85 +140,69 @@ export default async function TemaPage({ params }) {
             ))}
           </div>
 
-          {hasHero ? (
-            <Link href={tema.hero.href}>
-              <div className='feed-hero'>
-                <div className='feed-hero-img' />
-                <div className='feed-eyebrow'>
-                  <span className='cat-tag'>{tema.hero.cat}</span>
-                  <span className='topic-tag'>{tema.hero.tags}</span>
-                </div>
-                <h2 className='feed-hero-title'>{tema.hero.title}</h2>
-                <p className='feed-hero-deck'>{tema.hero.deck}</p>
-                <div className='feed-hero-meta'>
-                  <span>{tema.hero.date}</span>
-                  <span>{tema.hero.time}</span>
-                </div>
-              </div>
-            </Link>
-          ) : (
+          {!hasHero ? (
             <p style={{ padding: '1.5rem 0', color: 'var(--muted, #666)' }}>
               No hay artículos publicados con este tema todavía.
             </p>
-          )}
-
-          {tema.articles.map(a => (
-            <Link key={a.href || a.title} href={a.href || '#'}>
-              <div className='feed-item' role='link' tabIndex={0}>
-                <div>
+          ) : (
+            <>
+              <NewsletterArticleLink href={tema.hero.href} categorySlug={tema.hero.categorySlug}>
+                <div className='feed-hero'>
+                  <div className='feed-hero-img' />
                   <div className='feed-eyebrow'>
-                    <span className='cat-tag'>{a.cat}</span>
-                    <span className='topic-tag'>{a.tags}</span>
+                    <span className='cat-tag'>{tema.hero.cat}</span>
+                    <span className='topic-tag'>{tema.hero.tags}</span>
                   </div>
-                  <div className='feed-item-title'>{a.title}</div>
-                  <div className='feed-item-excerpt'>{a.excerpt}</div>
-                  <div className='feed-item-meta'>
-                    {a.date} · {a.time}
+                  <h2 className='feed-hero-title'>{tema.hero.title}</h2>
+                  <p className='feed-hero-deck'>{tema.hero.deck}</p>
+                  <div className='feed-hero-meta'>
+                    <span>{tema.hero.date}</span>
+                    <span>{tema.hero.time}</span>
                   </div>
                 </div>
-                <div className='feed-thumb' />
-              </div>
-            </Link>
-          ))}
-
-          {(hasHero || hasArticles) && (
-            <div className='load-more'>Cargar más artículos</div>
+              </NewsletterArticleLink>
+              <FeedLoadMore
+                variant='tema'
+                initialItems={tema.articles}
+                hasMore={tema.feedHasMore}
+                temaSlug={temaSlug}
+              />
+            </>
           )}
         </div>
 
         <aside className='tema-sidebar'>
-          <div className='sidebar-block'>
-            <div className='sidebar-label'>Newsletter Semanal</div>
-            <NewsletterSignup />
-          </div>
+          <NewsletterSidebarBlock />
+
+          {spotlightArticles.length > 0 ? (
+              <div className='sidebar-block'>
+                <div className='sidebar-label'>En el Spotlight</div>
+                {spotlightArticles.map(s => (
+                  <NewsletterArticleLink key={s.href} href={s.href} categorySlug={s.categorySlug}>
+                    <div className='sidebar-art'>
+                      <div className='sidebar-art-tag'>{s.topic}</div>
+                      <div className='sidebar-art-title'>{s.title}</div>
+                      <div className='sidebar-art-date'>{s.dateStr}</div>
+                    </div>
+                  </NewsletterArticleLink>
+                ))}
+              </div>
+          ) : null}
 
           <div className='sidebar-block'>
-            <div className='sidebar-label'>También en HUH</div>
-            {tema.sidebar.map(s => (
-              <div key={s.title} className='sidebar-art'>
-                <div className='sidebar-art-tag'>{s.tags}</div>
-                <div className='sidebar-art-title'>{s.title}</div>
-                <div className='sidebar-art-date'>{s.date}</div>
-              </div>
+            <div className='sidebar-label'>Focos de Tensión</div>
+            {focoSidebarRows.map(f => (
+              <Link key={f.slug || f.name} href={f.slug ? `/focos/${f.slug}` : '#'}>
+                <div className='foco-row'>
+                  <div className='fdot-sm' style={{ background: f.color }} />
+                  <div>
+                    <div className='foco-row-name'>{f.name}</div>
+                    <div className='foco-row-region'>{f.region}</div>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
-
-          {tema.focos.length ? (
-            <div className='sidebar-block'>
-              <div className='sidebar-label'>Focos de Tensión</div>
-              {tema.focos.map(f => (
-                <Link key={f.slug || f.name} href={f.slug ? `/focos/${f.slug}` : '#'}>
-                  <div className='foco-row'>
-                    <div className='fdot-sm' style={{ background: f.color }} />
-                    <div>
-                      <div className='foco-row-name'>{f.name}</div>
-                      <div className='foco-row-region'>{f.region}</div>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : null}
         </aside>
       </div>
 

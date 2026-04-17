@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import FeedLoadMore from '../FeedLoadMore/FeedLoadMore'
 import SiteHeader from '../SiteHeader/SiteHeader'
 import SiteFooter from '../SiteFooter/SiteFooter'
-import NewsletterSignup from '../NewsletterSignup/NewsletterSignup'
+import NewsletterSidebarBlock from '../NewsletterSidebarBlock/NewsletterSidebarBlock'
+import NewsletterArticleLink from '../NewsletterArticleLink/NewsletterArticleLink'
 
 /**
  * @param {{
@@ -9,6 +11,7 @@ import NewsletterSignup from '../NewsletterSignup/NewsletterSignup'
  *   tags: Array<{ name: string, slug: string }>,
  *   hero: { cat: string, topic: string, title: string, excerpt: string, dateStr: string, timeReadStr: string, href: string } | null,
  *   feedItems: Array<{ cat: string, topic: string, title: string, excerpt: string, dateStr: string, timeStr: string, href: string }>,
+ *   feedHasMore: boolean,
  *   sidebarArticles: Array<{ cat: string, topic: string, title: string, excerpt: string, dateStr: string, href: string }>,
  *   dispatchItems: Array<{ cat: string, topic: string, title: string, body: string, href: string }>,
  *   focoRows: Array<{ name: string, region: string, kind: string, slug: string | null }>
@@ -19,6 +22,7 @@ export default function Home({
   tags,
   hero,
   feedItems,
+  feedHasMore = false,
   sidebarArticles,
   dispatchItems,
   focoRows
@@ -66,9 +70,9 @@ export default function Home({
                   <span className='hero-featured-label'>Más reciente</span>
                 </div>
                 <h1 className='hero-title'>
-                  <Link href={hero.href} className='hero-title-link'>
+                  <NewsletterArticleLink href={hero.href} className='hero-title-link' categorySlug={hero.categorySlug}>
                     {hero.title}
-                  </Link>
+                  </NewsletterArticleLink>
                 </h1>
                 <p className='hero-deck'>{hero.excerpt}</p>
                 <div className='hero-image' />
@@ -85,32 +89,27 @@ export default function Home({
             )}
 
             <div className='article-feed'>
-              {feedItems.map(item => (
-                <Link key={item.href} href={item.href}>
-                  <div className='feed-item' role='link' tabIndex={0}>
-                    <div>
-                      <div className='feed-eyebrow'>
-                        <span className='feed-cat'>{item.cat}</span>
-                        <span className='feed-region'>{item.topic}</span>
-                      </div>
-                      <div className='feed-title'>{item.title}</div>
-                      <div className='feed-excerpt'>{item.excerpt}</div>
-                      <div className='feed-meta'>
-                        {item.dateStr} · {item.timeStr}
-                      </div>
-                    </div>
-                    <div className='feed-thumb' />
-                  </div>
-                </Link>
-              ))}
+              <FeedLoadMore variant='home' initialItems={feedItems} hasMore={feedHasMore} />
             </div>
           </main>
 
           <aside className='sidebar'>
-            <div className='sidebar-block'>
-              <div className='sidebar-label'>Newsletter Semanal</div>
-              <NewsletterSignup />
-            </div>
+            <NewsletterSidebarBlock />
+
+            {sidebarArticles.length > 0 ? (
+              <div className='sidebar-block'>
+                <div className='sidebar-label'>En el Spotlight</div>
+                {sidebarArticles.map(s => (
+                  <NewsletterArticleLink key={s.href} href={s.href} categorySlug={s.categorySlug}>
+                    <div className='sidebar-art'>
+                      <div className='sidebar-art-tag'>{s.topic}</div>
+                      <div className='sidebar-art-title'>{s.title}</div>
+                      <div className='sidebar-art-date'>{s.dateStr}</div>
+                    </div>
+                  </NewsletterArticleLink>
+                ))}
+              </div>
+            ) : null}
 
             <div className='sidebar-block'>
               <div className='sidebar-label'>Focos de Tensión</div>
@@ -126,21 +125,6 @@ export default function Home({
                 </Link>
               ))}
             </div>
-
-            {sidebarArticles.length > 0 ? (
-              <div className='sidebar-block'>
-                <div className='sidebar-label'>También en HUH</div>
-                {sidebarArticles.map(s => (
-                  <Link key={s.href} href={s.href}>
-                    <div className='sidebar-art'>
-                      <div className='sidebar-art-tag'>{s.topic}</div>
-                      <div className='sidebar-art-title'>{s.title}</div>
-                      <div className='sidebar-art-date'>{s.dateStr}</div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : null}
           </aside>
         </div>
       </div>

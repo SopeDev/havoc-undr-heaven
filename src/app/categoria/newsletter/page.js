@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import NewsletterArticleLink from '../../../components/NewsletterArticleLink/NewsletterArticleLink'
 import SiteHeader from '../../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../../components/SiteFooter/SiteFooter'
-import NewsletterSignup from '../../../components/NewsletterSignup/NewsletterSignup'
+import NewsletterArchiveGate from '../../../components/NewsletterArchiveGate/NewsletterArchiveGate'
+import NewsletterSidebarBlock from '../../../components/NewsletterSidebarBlock/NewsletterSidebarBlock'
 import NewsletterConfirmWelcomeModal from '../../../components/NewsletterConfirmWelcomeModal/NewsletterConfirmWelcomeModal'
 import { NEWSLETTER_SUBSCRIBE_STATUSES } from '../../../lib/newsletter/constants'
 import { DEFAULT_CATEGORY_TAB_LABELS, DEFAULT_CATEGORY_TAB_SLUGS } from '../categoriaConstants'
@@ -9,7 +11,7 @@ import { fetchArticlesByCategorySlugLimited, fetchCategoryBySlug } from '../../.
 import { fetchNewsletterIssuesForWeb } from '../../../lib/sanity/newsletterIssues'
 import { fetchFocosSidebarByUpdated } from '../../../lib/sanity/focos'
 import { fetchNavLists } from '../../../lib/sanity/navigation'
-import { formatArticleDate } from '../../../lib/sanity/articleView'
+import { categoryHrefSlug, formatArticleDate } from '../../../lib/sanity/articleView'
 import styles from './page.module.css'
 
 export const revalidate = 60
@@ -74,6 +76,7 @@ function mapIssueArticleToFeedRow(doc) {
   if (!slug) return null
   return {
     cat: doc.categoryName || 'Análisis',
+    categorySlug: categoryHrefSlug(doc.categoryName, doc.categorySlug),
     topic: tagLineFromArticle(doc) || '—',
     title: doc.title || '',
     excerpt: doc.deck || '',
@@ -235,6 +238,7 @@ export default async function NewsletterArchivePage({ searchParams }) {
     <>
       <SiteHeader />
       <NewsletterConfirmWelcomeModal subscribeStatus={subscribeStatus} />
+      <NewsletterArchiveGate />
 
       {subscribeNotice ? (
         <div className={`newsletter-status-banner newsletter-status-banner--${subscribeNotice.tone}`}>
@@ -356,7 +360,7 @@ export default async function NewsletterArchivePage({ searchParams }) {
                 ) : (
                   <div className={styles.articleList}>
                     {safeRows.map(item => (
-                      <Link key={item.href} href={item.href}>
+                      <NewsletterArticleLink key={item.href} href={item.href} categorySlug={item.categorySlug}>
                         <div className='feed-item' role='link' tabIndex={0}>
                           <div>
                             <div className='feed-item-eyebrow'>
@@ -371,7 +375,7 @@ export default async function NewsletterArchivePage({ searchParams }) {
                           </div>
                           <div className='feed-thumb' />
                         </div>
-                      </Link>
+                      </NewsletterArticleLink>
                     ))}
                   </div>
                 )}
@@ -381,10 +385,7 @@ export default async function NewsletterArchivePage({ searchParams }) {
         </div>
 
         <aside className='cat-sidebar'>
-          <div className='sidebar-block'>
-            <div className='sidebar-label'>Newsletter Semanal</div>
-            <NewsletterSignup />
-          </div>
+          <NewsletterSidebarBlock />
 
           <div className='sidebar-block'>
             <div className='sidebar-label'>En {analisisAsideTitle}</div>

@@ -2,19 +2,24 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import SiteHeader from '../../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../../components/SiteFooter/SiteFooter'
-import NewsletterSignup from '../../../components/NewsletterSignup/NewsletterSignup'
+import FeedLoadMore from '../../../components/FeedLoadMore/FeedLoadMore'
+import NewsletterArticleLink from '../../../components/NewsletterArticleLink/NewsletterArticleLink'
+import NewsletterSidebarBlock from '../../../components/NewsletterSidebarBlock/NewsletterSidebarBlock'
 import {
   DEFAULT_CATEGORY_TAB_LABELS,
   DEFAULT_CATEGORY_TAB_SLUGS,
   resolveCrossCategorySlug
 } from '../categoriaConstants'
+import { FEED_FIRST_PEEK_DOCS } from '../../../lib/feedPagination'
 import {
-  fetchArticlesByCategorySlug,
+  countArticlesByCategorySlug,
+  fetchArticlesByCategoryRange,
   fetchArticlesByCategorySlugLimited,
   fetchCategoryBySlug
 } from '../../../lib/sanity/articles'
 import { isSanityConfigured } from '../../../lib/sanity/client'
 import { mergeCategoriaPage } from '../../../lib/sanity/categoriaPageData'
+import { fetchSpotlightSidebarArticles } from '../../../lib/sanity/homePageData'
 import { fetchFocosSidebarByUpdated } from '../../../lib/sanity/focos'
 import { fetchNavLists } from '../../../lib/sanity/navigation'
 
@@ -47,17 +52,19 @@ export default async function CategoriaPage({ params, searchParams }) {
 
   const sanityOn = isSanityConfigured()
 
-  const [sanityCategory, nav, focoSidebarCms] = await Promise.all([
+  const [sanityCategory, nav, focoSidebarCms, spotlightArticles] = await Promise.all([
     fetchCategoryBySlug(key),
     fetchNavLists(),
-    fetchFocosSidebarByUpdated(4)
+    fetchFocosSidebarByUpdated(4),
+    fetchSpotlightSidebarArticles()
   ])
 
   const temaSlug = rawTema && nav.tags.some(t => t.slug === rawTema) ? rawTema : null
-  const sanityArticles = await fetchArticlesByCategorySlug(
-    key,
-    temaSlug ? { tagSlug: temaSlug } : {}
-  )
+  const categoryFetchOpts = temaSlug ? { tagSlug: temaSlug } : {}
+  const [articleCount, peekDocs] = await Promise.all([
+    countArticlesByCategorySlug(key, categoryFetchOpts),
+    fetchArticlesByCategoryRange(key, 0, FEED_FIRST_PEEK_DOCS, categoryFetchOpts)
+  ])
 
   const crossSlug = resolveCrossCategorySlug(key, nav.categories)
   const crossCategoryTitle = crossSlug
@@ -78,11 +85,12 @@ export default async function CategoriaPage({ params, searchParams }) {
 
   const tagFilterActive = Boolean(temaSlug)
 
-  const data = mergeCategoriaPage(sanityCategory, sanityArticles, {
+  const data = mergeCategoriaPage(sanityCategory, peekDocs, {
     tagFilterActive,
     sanityConfigured: sanityOn,
     crossCategorySidebarArticles: crossCategoryArticles,
-    crossCategoryTitle
+    crossCategoryTitle,
+    articleTotalCount: articleCount
   })
 
   const sidebarItems = data.sidebar?.length > 0 ? data.sidebar : []
@@ -187,7 +195,7 @@ export default async function CategoriaPage({ params, searchParams }) {
           ) : null}
 
           {!data.feedEmpty && data.hero ? (
-            <Link href={data.hero.href}>
+            <NewsletterArticleLink href={data.hero.href} categorySlug={data.hero.categorySlug}>
               <div className='feed-hero' role='link' tabIndex={0}>
                 <div className='feed-hero-image' />
                 <div className='feed-hero-eyebrow'>
@@ -201,38 +209,38 @@ export default async function CategoriaPage({ params, searchParams }) {
                   <span>{data.hero.time}</span>
                 </div>
               </div>
-            </Link>
+            </NewsletterArticleLink>
           ) : null}
 
-          {data.items.map(item => (
-            <Link key={item.href} href={item.href}>
-              <div className='feed-item' role='link' tabIndex={0}>
-                <div>
-                  <div className='feed-item-eyebrow'>
-                    <span className='cat-tag'>{item.cat}</span>
-                    <span className='topic-tag'>{item.topic}</span>
-                  </div>
-                  <div className='feed-item-title'>{item.title}</div>
-                  <div className='feed-item-excerpt'>{item.excerpt}</div>
-                  <div className='feed-item-meta'>
-                    {item.date} · {item.time}
-                  </div>
-                </div>
-                <div className='feed-thumb' />
-              </div>
-            </Link>
-          ))}
-
-          {!data.feedEmpty && (data.hero || data.items.length > 0) ? (
-            <div className='load-more'>Cargar más artículos</div>
+          {!data.feedEmpty && (data.hero || data.items.length > 0 || data.feedHasMore) ? (
+            <FeedLoadMore
+              variant='categoria'
+              initialItems={data.items}
+              hasMore={data.feedHasMore}
+              categorySlug={key}
+              temaSlug={temaSlug || undefined}
+              sectionTitle={data.title}
+            />
           ) : null}
         </div>
 
         <aside className='cat-sidebar'>
-          <div className='sidebar-block'>
-            <div className='sidebar-label'>Newsletter Semanal</div>
-            <NewsletterSignup />
-          </div>
+          <NewsletterSidebarBlock />
+
+          {spotlightArticles.length > 0 ? (
+            <div className='sidebar-block'>
+              <div className='sidebar-label'>En el Spotlight</div>
+              {spotlightArticles.map(s => (
+                <NewsletterArticleLink key={s.href} href={s.href} categorySlug={s.categorySlug}>
+                  <div className='sidebar-art'>
+                    <div className='sidebar-art-tag'>{s.topic}</div>
+                    <div className='sidebar-art-title'>{s.title}</div>
+                    <div className='sidebar-art-date'>{s.dateStr}</div>
+                  </div>
+                </NewsletterArticleLink>
+              ))}
+            </div>
+          ) : null}
 
           {sidebarItems.length > 0 ? (
             <div className='sidebar-block'>

@@ -4,12 +4,11 @@
 
 - New email subscribe:
   - Submit from navbar modal and aside form
-  - Expect API status `confirmation_sent`
-  - Expect confirmation email delivered
+  - Expect API status `subscribed` and contact created in Resend (no confirmation email)
+  - Domains without MX/A/AAAA DNS are rejected with `invalid_email_domain`
 - Already subscribed email:
   - Submit same address again
   - Expect API status `already_subscribed`
-  - Expect no new confirmation email
 - Invalid/expired confirm token:
   - Open stale or tampered confirm URL
   - Expect redirect with `subscribe=invalid`

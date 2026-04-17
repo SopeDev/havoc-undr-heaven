@@ -3,11 +3,32 @@
 import { useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import SiteHeader from '../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../components/SiteFooter/SiteFooter'
-import NewsletterSignup from '../../components/NewsletterSignup/NewsletterSignup'
+import NewsletterSidebarBlock from '../../components/NewsletterSidebarBlock/NewsletterSidebarBlock'
+import { useNewsletterSubscriber } from '../../hooks/useNewsletterSubscriber'
+import {
+  readNewsletterSubscriber,
+  SESSION_NEWSLETTER_MODAL_FLAG
+} from '../../lib/newsletter/subscriberLocalStorage'
 
-export default function ArticlePageClient({ view, body }) {
+export default function ArticlePageClient({ view, body, requiresNewsletterAccess = false }) {
+  const router = useRouter()
+  const { subscribed } = useNewsletterSubscriber()
+
+  useEffect(() => {
+    if (!requiresNewsletterAccess) return
+    if (subscribed) return
+    if (readNewsletterSubscriber()) return
+    try {
+      sessionStorage.setItem(SESSION_NEWSLETTER_MODAL_FLAG, '1')
+    } catch {
+      // ignore
+    }
+    router.replace('/')
+  }, [requiresNewsletterAccess, subscribed, router])
+
   useEffect(() => {
     const onScroll = () => {
       const progressEl = document.getElementById('progress')
@@ -173,10 +194,7 @@ export default function ArticlePageClient({ view, body }) {
         </article>
 
         <aside className='article-sidebar'>
-          <div className='sidebar-block'>
-            <div className='sidebar-label'>Newsletter Semanal</div>
-            <NewsletterSignup />
-          </div>
+          <NewsletterSidebarBlock />
 
           <div className='sidebar-block'>
             <div className='sidebar-label'>Más en {view.cat}</div>

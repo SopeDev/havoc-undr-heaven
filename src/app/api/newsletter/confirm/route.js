@@ -11,9 +11,12 @@ import { NEWSLETTER_SUBSCRIBE_STATUSES } from '../../../../lib/newsletter/consta
 
 export const runtime = 'nodejs'
 
-const redirectWithStatus = ({ baseUrl, status }) => {
+const redirectWithStatus = ({ baseUrl, status, email }) => {
   const url = new URL('/categoria/newsletter', baseUrl)
   url.searchParams.set('subscribe', status)
+  if (status === NEWSLETTER_SUBSCRIBE_STATUSES.CONFIRMED && email) {
+    url.searchParams.set('confirmed_email', email)
+  }
   return NextResponse.redirect(url)
 }
 
@@ -38,7 +41,11 @@ export async function GET(req) {
     if (!isResendContactSubscribed(savedContact)) {
       return redirectWithStatus({ baseUrl, status: NEWSLETTER_SUBSCRIBE_STATUSES.ERROR })
     }
-    return redirectWithStatus({ baseUrl, status: NEWSLETTER_SUBSCRIBE_STATUSES.CONFIRMED })
+    return redirectWithStatus({
+      baseUrl,
+      status: NEWSLETTER_SUBSCRIBE_STATUSES.CONFIRMED,
+      email: parsed.email
+    })
   } catch {
     return redirectWithStatus({ baseUrl, status: NEWSLETTER_SUBSCRIBE_STATUSES.ERROR })
   }

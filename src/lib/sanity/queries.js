@@ -48,6 +48,20 @@ export const homePageArticlesQuery = groq`
     publishedAt,
     readingTimeMinutes,
     "categoryName": category->name,
+    "categorySlug": category->slug.current,
+    "tagNames": tags[]->name
+  }
+`
+
+export const homePageArticlesRangeQuery = groq`
+  *[_type == "article" && defined(slug.current) && ${groqArticleVisibleOnWeb}] | order(publishedAt desc)[$start...$end] {
+    title,
+    "slug": slug.current,
+    deck,
+    publishedAt,
+    readingTimeMinutes,
+    "categoryName": category->name,
+    "categorySlug": category->slug.current,
     "tagNames": tags[]->name
   }
 `
@@ -105,6 +119,40 @@ export const articlesByCategorySlugAndTagSlugQuery = groq`
     "categoryName": category->name,
     "tagNames": tags[]->name
   }
+`
+
+export const articlesByCategorySlugRangeQuery = groq`
+  *[_type == "article" && category->slug.current == $categorySlug && defined(slug.current) && ${groqArticleVisibleOnWeb}] | order(publishedAt desc)[$start...$end] {
+    title,
+    "slug": slug.current,
+    deck,
+    publishedAt,
+    readingTimeMinutes,
+    "categoryName": category->name,
+    "categorySlug": category->slug.current,
+    "tagNames": tags[]->name
+  }
+`
+
+export const articlesByCategorySlugAndTagSlugRangeQuery = groq`
+  *[_type == "article" && category->slug.current == $categorySlug && defined(slug.current) && ${groqArticleVisibleOnWeb} && $tagSlug in tags[]->slug.current] | order(publishedAt desc)[$start...$end] {
+    title,
+    "slug": slug.current,
+    deck,
+    publishedAt,
+    readingTimeMinutes,
+    "categoryName": category->name,
+    "categorySlug": category->slug.current,
+    "tagNames": tags[]->name
+  }
+`
+
+export const countArticlesByCategorySlugQuery = groq`
+  count(*[_type == "article" && category->slug.current == $categorySlug && defined(slug.current) && ${groqArticleVisibleOnWeb}])
+`
+
+export const countArticlesByCategorySlugAndTagSlugQuery = groq`
+  count(*[_type == "article" && category->slug.current == $categorySlug && defined(slug.current) && ${groqArticleVisibleOnWeb} && $tagSlug in tags[]->slug.current])
 `
 
 /** Latest N articles in a category (no tema filter). $limit must be a small integer (e.g. 3). */
@@ -210,15 +258,22 @@ export const articlesByTagSlugQuery = groq`
   }
 `
 
-export const focosByTagSlugQuery = groq`
-  *[_type == "foco" && defined(slug.current) && $tagSlug in tags[]->slug.current] | order(sortOrder asc, title asc) {
+export const articlesByTagSlugRangeQuery = groq`
+  *[_type == "article" && defined(slug.current) && ${groqArticleVisibleOnWeb} && $tagSlug in tags[]->slug.current] | order(publishedAt desc)[$start...$end] {
     title,
     "slug": slug.current,
-    titleLines,
-    status,
-    regionLineOverride,
-    "tagNames": tags[]->name
+    deck,
+    publishedAt,
+    readingTimeMinutes,
+    "categoryName": category->name,
+    "categorySlug": category->slug.current,
+    "tagNames": tags[]->name,
+    "tagList": tags[]->{ name, "slug": slug.current }
   }
+`
+
+export const countArticlesByTagSlugQuery = groq`
+  count(*[_type == "article" && defined(slug.current) && ${groqArticleVisibleOnWeb} && $tagSlug in tags[]->slug.current])
 `
 
 export const allCategoriesQuery = groq`
@@ -271,6 +326,7 @@ export const newsletterIssuesForWebQuery = groq`
       includeInWeeklyNewsletter,
       releasedToWebAt,
       "categoryName": category->name,
+      "categorySlug": category->slug.current,
       "tagNames": tags[]->name,
       "tagSlugs": tags[]->slug.current
     }

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { useNewsletterSubscriber } from '../../hooks/useNewsletterSubscriber'
+import { setNewsletterSubscriber } from '../../lib/newsletter/subscriberLocalStorage'
 
 const isValidEmail = email => {
   const v = email.trim()
@@ -15,9 +17,12 @@ export default function NewsletterSignup({
   description = 'Análisis geopolítico directo a tu correo cada semana.',
   onSuccess
 }) {
+  const { subscribed } = useNewsletterSubscriber()
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  if (subscribed) return null
 
   const statusStyles = {
     marginTop: 10,
@@ -46,18 +51,33 @@ export default function NewsletterSignup({
       const payload = await res.json().catch(() => null)
 
       if (!res.ok) {
-        setStatus('error')
+        if (payload?.error === 'invalid_email_domain') setStatus('bad_domain')
+        else if (payload?.error === 'invalid_email') setStatus('invalid')
+        else setStatus('error')
         return
       }
 
       if (payload?.status === 'already_subscribed') {
+        setNewsletterSubscriber(email)
         setStatus('already')
         return
       }
 
-      setEmail('')
-      setStatus('confirm')
-      if (typeof onSuccess === 'function') onSuccess()
+      if (payload?.error === 'invalid_email_domain') {
+        setStatus('bad_domain')
+        return
+      }
+
+      if (payload?.status === 'subscribed') {
+        const addr = email.trim().toLowerCase()
+        setNewsletterSubscriber(addr)
+        setEmail('')
+        setStatus('subscribed')
+        if (typeof onSuccess === 'function') onSuccess()
+        return
+      }
+
+      setStatus('error')
     } catch {
       setStatus('error')
     } finally {
@@ -89,15 +109,21 @@ export default function NewsletterSignup({
         </div>
       ) : null}
 
-      {status === 'confirm' ? (
+      {status === 'subscribed' ? (
         <div style={{ ...statusStyles, color: '#88CC00' }}>
-          Revisa tu correo para confirmar
+          Listo, ya estás suscripto
+        </div>
+      ) : null}
+
+      {status === 'bad_domain' ? (
+        <div style={{ ...statusStyles, color: '#E07800' }}>
+          Ese dominio no parece tener correo activo; revisá el email
         </div>
       ) : null}
 
       {status === 'error' ? (
         <div style={{ ...statusStyles, color: '#CC2200' }}>
-          No pudimos enviar confirmacion
+          No pudimos completar la suscripción
         </div>
       ) : null}
 

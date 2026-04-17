@@ -36,5 +36,7 @@ export default async function ArticlePage({ params }) {
   const related = await fetchRelatedArticles(slug)
   const view = buildArticleViewFromSanity(doc, related)
   const body = <ArticleBodyPortableText value={doc.body} />
-  return <ArticlePageClient view={view} body={body} />
+  return (
+    <ArticlePageClient view={view} body={body} requiresNewsletterAccess={view.catSlug === 'newsletter'} />
+  )
 }

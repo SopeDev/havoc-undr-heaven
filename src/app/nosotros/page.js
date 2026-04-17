@@ -3,6 +3,7 @@ import Link from 'next/link'
 import SiteHeader from '../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../components/SiteFooter/SiteFooter'
 import NewsletterSignup from '../../components/NewsletterSignup/NewsletterSignup'
+import UnlessNewsletterSubscribed from '../../components/UnlessNewsletterSubscribed/UnlessNewsletterSubscribed'
 import styles from './Nosotros.module.css'
 
 export const metadata = {
@@ -229,15 +230,17 @@ export default function NosotrosPage() {
         <p className={styles.closingAttr}>Nuestra Filosofía · Havoc Undr Heaven</p>
       </section>
 
-      <section className={styles.cta} aria-labelledby='nosotros-dispatch'>
-        <p className={styles.ctaEyebrow}>Únete a la conversación</p>
-        <h2 id='nosotros-dispatch' className={styles.ctaTitle}>
-          Havoc Dispatch
-        </h2>
-        <p className={styles.ctaSub}>Análisis geopolítico semanal directo a tu correo. Sin ruido, sin agenda.</p>
-        <NewsletterSignup placeholder='tu@correo.com' />
-        <p className={styles.ctaNote}>Gratuito · Sin spam · Cancelación inmediata</p>
-      </section>
+      <UnlessNewsletterSubscribed>
+        <section className={styles.cta} aria-labelledby='nosotros-dispatch'>
+          <p className={styles.ctaEyebrow}>Únete a la conversación</p>
+          <h2 id='nosotros-dispatch' className={styles.ctaTitle}>
+            Havoc Dispatch
+          </h2>
+          <p className={styles.ctaSub}>Análisis geopolítico semanal directo a tu correo. Sin ruido, sin agenda.</p>
+          <NewsletterSignup placeholder='tu@correo.com' />
+          <p className={styles.ctaNote}>Gratuito · Sin spam · Cancelación inmediata</p>
+        </section>
+      </UnlessNewsletterSubscribed>
 
       <SiteFooter />
     </>

@@ -581,6 +581,17 @@ footer {
   font-weight: 600;
 }
 
+/* Tema archive: active topic = black bar segment, white type */
+.region-bar.region-bar--tema .region-item.active {
+  background: var(--black);
+  color: var(--white);
+  font-weight: 600;
+}
+
+.region-bar.region-bar--tema .region-item.active:hover {
+  color: var(--white);
+}
+
 /* ── LAYOUT ── */
 .site-body {
   max-width: 1200px;
@@ -1418,29 +1429,35 @@ a.dispatch-card:hover .dispatch-title {
 
 .breadcrumb {
   padding: 12px 48px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   gap: 8px;
   align-items: center;
+  background: var(--black);
+  color: var(--white);
 }
 
 .breadcrumb span {
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .breadcrumb a {
   color: inherit;
 }
 
+.breadcrumb a:hover {
+  color: var(--white);
+}
+
 .breadcrumb .sep {
-  color: var(--border);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .breadcrumb .current {
-  color: var(--text);
+  color: var(--white);
   font-weight: 600;
 }
 
@@ -2786,6 +2803,17 @@ a.feed-filter {
   margin-top: 24px;
 }
 
+button.load-more {
+  width: 100%;
+  font: inherit;
+  background: var(--white);
+}
+
+button.load-more:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .load-more:hover {
   background: var(--black);
   color: var(--white);
@@ -3213,6 +3241,17 @@ a.topic-pill {
   cursor: pointer;
   transition: all 0.2s;
   margin-top: 24px;
+}
+
+.cat-feed button.load-more {
+  width: 100%;
+  font: inherit;
+  background: var(--white);
+}
+
+.cat-feed button.load-more:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .cat-feed .load-more:hover {

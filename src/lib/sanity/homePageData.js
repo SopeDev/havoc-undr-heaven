@@ -1,11 +1,12 @@
+import { FEED_FIRST_PEEK_DOCS, FEED_PAGE_SIZE } from '../feedPagination'
 import {
   getHottestSidebarRawDocs,
   HOTTEST_ASIDE_LIMIT,
   HOTTEST_SANITY_POOL,
   isUmamiAnalyticsConfigured
 } from '../umami/hottestArticles'
-import { formatArticleDate } from './articleView'
-import { fetchHomeArticles } from './articles'
+import { categoryHrefSlug, formatArticleDate } from './articleView'
+import { fetchHomeArticles, fetchHomeArticlesRange } from './articles'
 import { fetchFocosSidebarByUpdated } from './focos'
 import { fetchHomeDispatchItems } from './newsletterIssues'
 import { fetchNavLists } from './navigation'
@@ -18,6 +19,7 @@ export function mapRawDocToHomeRow(doc) {
   const mins = doc.readingTimeMinutes
   return {
     cat: doc.categoryName || 'Análisis',
+    categorySlug: categoryHrefSlug(doc.categoryName, doc.categorySlug),
     topic: tagLineFromNames(doc.tagNames) || '—',
     title: doc.title || '',
     excerpt: doc.deck || '',
@@ -34,16 +36,50 @@ export function partitionHomeArticles(rows) {
     return { hero: null, feedItems: [], sidebarArticles: [] }
   }
   const hero = rows[0]
-  const feedItems = rows.slice(1, 5)
-  const sidebarArticles = rows.slice(5, 8)
+  const feedItems = rows.slice(1, 1 + FEED_PAGE_SIZE)
+  const sidebarArticles = rows.slice(1 + FEED_PAGE_SIZE, 1 + FEED_PAGE_SIZE + 3)
   return { hero, feedItems, sidebarArticles }
+}
+
+/**
+ * Same ranking / fallback as the home aside “En el Spotlight” block.
+ * @param {Array<Record<string, unknown>>} docs raw rows from fetchHomeArticles
+ * @returns {Promise<Array<ReturnType<typeof mapRawDocToHomeRow>>>}
+ */
+async function resolveSpotlightSidebarArticlesFromDocs(docs) {
+  if (!Array.isArray(docs) || docs.length === 0) return []
+  const articleRows = docs.map(mapRawDocToHomeRow)
+  const { sidebarArticles: partitionSidebar } = partitionHomeArticles(articleRows)
+  let sidebarArticles = partitionSidebar
+  if (isUmamiAnalyticsConfigured()) {
+    const excluded = new Set(
+      articleRows
+        .slice(0, 1 + FEED_PAGE_SIZE)
+        .map(r => r.href?.replace(/^\/articulos\//, '') || '')
+        .filter(Boolean)
+        .map(s => s.toLowerCase())
+    )
+    const hottestDocs = await getHottestSidebarRawDocs(docs, excluded, HOTTEST_ASIDE_LIMIT)
+    if (hottestDocs.length > 0) {
+      sidebarArticles = hottestDocs.map(mapRawDocToHomeRow)
+    }
+  }
+  return sidebarArticles
+}
+
+/** Fetches and ranks spotlight aside rows (for home, category pages, etc.). */
+export async function fetchSpotlightSidebarArticles() {
+  const articleLimit = isUmamiAnalyticsConfigured() ? HOTTEST_SANITY_POOL : 8
+  const docs = await fetchHomeArticles(articleLimit)
+  return resolveSpotlightSidebarArticlesFromDocs(docs)
 }
 
 export async function fetchHomePageData() {
   const articleLimit = isUmamiAnalyticsConfigured() ? HOTTEST_SANITY_POOL : 8
 
-  const [nav, docs, focos, dispatchItems] = await Promise.all([
+  const [nav, peekDocs, poolDocs, focos, dispatchItems] = await Promise.all([
     fetchNavLists(),
+    fetchHomeArticlesRange(0, FEED_FIRST_PEEK_DOCS),
     fetchHomeArticles(articleLimit),
     fetchFocosSidebarByUpdated(5),
     fetchHomeDispatchItems()
@@ -51,8 +87,6 @@ export async function fetchHomePageData() {
 
   const categories = nav.categories
   const tags = nav.tags
-  const articleRows =
-    Array.isArray(docs) && docs.length > 0 ? docs.map(mapRawDocToHomeRow) : []
 
   let focoRows = []
   if (Array.isArray(focos) && focos.length > 0) {
@@ -64,24 +98,22 @@ export async function fetchHomePageData() {
     }))
   }
 
-  const { hero, feedItems, sidebarArticles: partitionSidebar } = partitionHomeArticles(articleRows)
+  const hero =
+    Array.isArray(peekDocs) && peekDocs.length > 0 ? mapRawDocToHomeRow(peekDocs[0]) : null
+  const feedItems =
+    Array.isArray(peekDocs) && peekDocs.length > 1
+      ? peekDocs.slice(1, 1 + FEED_PAGE_SIZE).map(mapRawDocToHomeRow)
+      : []
+  const feedHasMore = Array.isArray(peekDocs) && peekDocs.length > 1 + FEED_PAGE_SIZE
 
-  let sidebarArticles = partitionSidebar
-  if (isUmamiAnalyticsConfigured() && Array.isArray(docs) && docs.length > 0) {
-    const heroSlug = articleRows[0]?.href?.replace(/^\/articulos\//, '') || null
-    const feedSlugs = articleRows.slice(1, 5).map(r => r.href?.replace(/^\/articulos\//, '') || '')
-    const excluded = new Set([heroSlug, ...feedSlugs].filter(Boolean))
-    const hottestDocs = await getHottestSidebarRawDocs(docs, excluded, HOTTEST_ASIDE_LIMIT)
-    if (hottestDocs.length > 0) {
-      sidebarArticles = hottestDocs.map(mapRawDocToHomeRow)
-    }
-  }
+  const sidebarArticles = await resolveSpotlightSidebarArticlesFromDocs(poolDocs)
 
   return {
     categories,
     tags,
     hero,
     feedItems,
+    feedHasMore,
     sidebarArticles,
     dispatchItems,
     focoRows

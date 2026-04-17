@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import SiteHeader from '../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../components/SiteFooter/SiteFooter'
-import NewsletterSignup from '../../components/NewsletterSignup/NewsletterSignup'
+import NewsletterSidebarBlock from '../../components/NewsletterSidebarBlock/NewsletterSidebarBlock'
 
 /** CMS rows use unix seconds for `ts`; normalize any legacy YYYYMMDD for sorting. */
 function comparableTs(row) {
@@ -309,10 +309,7 @@ export default function BuscarClient({ cmsArticles = [], categories = [], tags =
         </div>
 
         <aside className='search-sidebar'>
-          <div className='sidebar-block'>
-            <div className='sidebar-label'>Newsletter Semanal</div>
-            <NewsletterSignup />
-          </div>
+          <NewsletterSidebarBlock />
 
           {tags.length > 0 && (
             <div className='sidebar-block'>

@@ -1,16 +1,11 @@
+import { FEED_FIRST_PEEK_DOCS, FEED_PAGE_SIZE } from '../feedPagination'
 import { getSanityClient } from './client'
-import { formatArticleDate } from './articleView'
+import { categoryHrefSlug, formatArticleDate } from './articleView'
 import {
-  tagBySlugQuery,
-  articlesByTagSlugQuery,
-  focosByTagSlugQuery
+  articlesByTagSlugRangeQuery,
+  countArticlesByTagSlugQuery,
+  tagBySlugQuery
 } from './queries'
-
-const FOCO_DOT_COLOR = {
-  hot: 'var(--red)',
-  warm: 'var(--orange)',
-  cold: 'var(--blue)'
-}
 
 /** Last N articles (newest first) used to compute co-occurring tags */
 const RELATED_ARTICLE_WINDOW = 20
@@ -59,6 +54,7 @@ function mapArticleToHero(a) {
   const mins = a.readingTimeMinutes
   return {
     cat: a.categoryName || 'Análisis',
+    categorySlug: categoryHrefSlug(a.categoryName, a.categorySlug),
     tags: tagLineFromNames(a.tagNames) || '—',
     title: a.title || '',
     deck: a.deck || '',
@@ -68,10 +64,11 @@ function mapArticleToHero(a) {
   }
 }
 
-function mapArticleToFeedItem(a) {
+export function mapArticleToFeedItem(a) {
   const mins = a.readingTimeMinutes
   return {
     cat: a.categoryName || 'Análisis',
+    categorySlug: categoryHrefSlug(a.categoryName, a.categorySlug),
     tags: tagLineFromNames(a.tagNames) || '—',
     title: a.title || '',
     excerpt: a.deck || '',
@@ -81,61 +78,45 @@ function mapArticleToFeedItem(a) {
   }
 }
 
-function mapFocoToSidebar(f) {
-  const status = f.status === 'hot' || f.status === 'cold' ? f.status : 'warm'
-  const tagNames = Array.isArray(f.tagNames) ? f.tagNames.filter(Boolean) : []
-  const lines = Array.isArray(f.titleLines)
-    ? f.titleLines.filter(x => typeof x === 'string' && x.trim())
-    : []
-  const name = lines.length > 0 ? lines.join(' ') : f.title || f.slug
-  const region =
-    (typeof f.regionLineOverride === 'string' && f.regionLineOverride.trim()) ||
-    (tagNames.length ? tagNames.join(' · ') : '—')
-  return {
-    name,
-    region,
-    color: FOCO_DOT_COLOR[status] || FOCO_DOT_COLOR.warm,
-    slug: f.slug
-  }
-}
-
 /**
- * Fetches tag + articles + focos for a tema page and returns the shape
+ * Fetches tag + articles for a tema page and returns the shape
  * the page component expects, or null if CMS is off / tag not found.
  */
 export async function fetchTemaPageData(temaSlug) {
   const client = getSanityClient()
   if (!client) return null
 
-  const [tag, articles, focos] = await Promise.all([
+  const [tag, totalCount, metaArticles] = await Promise.all([
     client.fetch(tagBySlugQuery, { slug: temaSlug }),
-    client.fetch(articlesByTagSlugQuery, { tagSlug: temaSlug }),
-    client.fetch(focosByTagSlugQuery, { tagSlug: temaSlug })
+    client.fetch(countArticlesByTagSlugQuery, { tagSlug: temaSlug }),
+    client.fetch(articlesByTagSlugRangeQuery, {
+      tagSlug: temaSlug,
+      start: 0,
+      end: Math.max(FEED_FIRST_PEEK_DOCS, RELATED_ARTICLE_WINDOW)
+    })
   ])
 
   if (!tag?.slug) return null
 
-  const safeArticles = Array.isArray(articles) ? articles : []
-  const safeFocos = Array.isArray(focos) ? focos : []
+  const safeArticles = Array.isArray(metaArticles) ? metaArticles : []
+  const nTotal = typeof totalCount === 'number' ? totalCount : 0
 
   const latest = safeArticles.length > 0
     ? formatArticleDate(safeArticles[0].publishedAt)
     : '—'
 
+  const feedSlice = safeArticles.slice(1, 1 + FEED_PAGE_SIZE).map(mapArticleToFeedItem)
+  const feedHasMore = nTotal > 1 + FEED_PAGE_SIZE
+
   return {
     label: tag.name,
     desc: tag.description || '',
-    count: safeArticles.length,
+    count: nTotal,
     latest,
     sections: deriveSections(safeArticles),
     related: deriveRelatedTags(safeArticles, tag.slug),
     hero: safeArticles.length > 0 ? mapArticleToHero(safeArticles[0]) : null,
-    articles: safeArticles.slice(1).map(mapArticleToFeedItem),
-    sidebar: safeArticles.slice(1, 4).map(a => ({
-      tags: tagLineFromNames(a.tagNames) || '—',
-      title: a.title || '',
-      date: formatArticleDate(a.publishedAt)
-    })),
-    focos: safeFocos.map(mapFocoToSidebar)
+    articles: feedSlice,
+    feedHasMore
   }
 }

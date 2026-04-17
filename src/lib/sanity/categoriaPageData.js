@@ -1,4 +1,5 @@
-import { formatArticleDate } from './articleView'
+import { FEED_PAGE_SIZE } from '../feedPagination'
+import { categoryHrefSlug, formatArticleDate } from './articleView'
 
 function tagLineFromDoc(doc) {
   return Array.isArray(doc.tagNames) ? doc.tagNames.filter(Boolean).join(' · ') : ''
@@ -9,6 +10,7 @@ function mapDocToHero(doc, sectionTitle) {
   const timeRead = typeof mins === 'number' ? `${mins} min de lectura` : '—'
   return {
     cat: doc.categoryName || sectionTitle,
+    categorySlug: categoryHrefSlug(doc.categoryName, doc.categorySlug),
     topic: tagLineFromDoc(doc) || '—',
     title: doc.title || '',
     deck: doc.deck || '',
@@ -18,11 +20,12 @@ function mapDocToHero(doc, sectionTitle) {
   }
 }
 
-function mapDocToItem(doc, sectionTitle) {
+export function mapDocToItem(doc, sectionTitle) {
   const mins = doc.readingTimeMinutes
   const timeShort = typeof mins === 'number' ? `${mins} min` : '—'
   return {
     cat: doc.categoryName || sectionTitle,
+    categorySlug: categoryHrefSlug(doc.categoryName, doc.categorySlug),
     topic: tagLineFromDoc(doc) || '—',
     title: doc.title || '',
     excerpt: doc.deck || '',
@@ -56,14 +59,15 @@ const emptyStats = thirdStat => [
 /**
  * @param {{ name?: string, description?: string } | null} sanityCategory
  * @param {Array<Record<string, unknown>>} sanityArticles
- * @param {{ tagFilterActive?: boolean, sanityConfigured?: boolean, crossCategorySidebarArticles?: Array<Record<string, unknown>> | null, crossCategoryTitle?: string | null }} [ctx]
+ * @param {{ tagFilterActive?: boolean, sanityConfigured?: boolean, crossCategorySidebarArticles?: Array<Record<string, unknown>> | null, crossCategoryTitle?: string | null, articleTotalCount?: number }} [ctx]
  */
 export function mergeCategoriaPage(sanityCategory, sanityArticles, ctx = {}) {
   const {
     tagFilterActive = false,
     sanityConfigured = false,
     crossCategorySidebarArticles = null,
-    crossCategoryTitle = null
+    crossCategoryTitle = null,
+    articleTotalCount: articleTotalCountOpt = null
   } = ctx
   const title = sanityCategory?.name?.trim() || 'Categoría'
   const desc = sanityCategory?.description?.trim() || ''
@@ -72,10 +76,14 @@ export function mergeCategoriaPage(sanityCategory, sanityArticles, ctx = {}) {
 
   if (sanityArticles.length > 0) {
     const hero = mapDocToHero(sanityArticles[0], title)
-    const items = sanityArticles.slice(1).map(d => mapDocToItem(d, title))
+    const items = sanityArticles
+      .slice(1, 1 + FEED_PAGE_SIZE)
+      .map(d => mapDocToItem(d, title))
     const latest = formatArticleDate(sanityArticles[0].publishedAt)
+    const totalArticles =
+      typeof articleTotalCountOpt === 'number' ? articleTotalCountOpt : sanityArticles.length
     const stats = [
-      { label: 'Artículos publicados', val: String(sanityArticles.length) },
+      { label: 'Artículos publicados', val: String(totalArticles) },
       { label: 'Más reciente', val: latest },
       thirdStat
     ]
@@ -87,7 +95,8 @@ export function mergeCategoriaPage(sanityCategory, sanityArticles, ctx = {}) {
       items,
       sidebar: cross.sidebar,
       sidebarSectionTitle: cross.sidebarSectionTitle,
-      feedEmpty: false
+      feedEmpty: false,
+      feedHasMore: totalArticles > 1 + FEED_PAGE_SIZE
     }
   }
 
@@ -100,7 +109,8 @@ export function mergeCategoriaPage(sanityCategory, sanityArticles, ctx = {}) {
       items: [],
       sidebar: cross.sidebar,
       sidebarSectionTitle: cross.sidebarSectionTitle,
-      feedEmpty: true
+      feedEmpty: true,
+      feedHasMore: false
     }
   }
 
@@ -112,6 +122,7 @@ export function mergeCategoriaPage(sanityCategory, sanityArticles, ctx = {}) {
     items: [],
     sidebar: cross.sidebar,
     sidebarSectionTitle: cross.sidebarSectionTitle,
-    feedEmpty: true
+    feedEmpty: true,
+    feedHasMore: false
   }
 }

@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server'
-import { buildConfirmationToken } from '../../../../lib/newsletter/confirmationToken'
+import { domainLikelyAcceptsMail } from '../../../../lib/newsletter/emailDomainMailCheck'
 import {
-  getAppBaseUrl,
-  getNewsletterSender,
   getResendClient,
   getResendContactByEmail,
-  isResendContactSubscribed
+  isResendContactSubscribed,
+  upsertResendContact
 } from '../../../../lib/newsletter/resendClient'
 import { NEWSLETTER_SUBSCRIBE_STATUSES } from '../../../../lib/newsletter/constants'
 
@@ -13,27 +12,11 @@ export const runtime = 'nodejs'
 
 const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
-const jsonOk = body => NextResponse.json(body, { status: 200 })
-
-const confirmationEmailHtml = ({ confirmUrl }) => `
-  <div style="font-family: Arial, sans-serif; color: #111111; line-height: 1.6; padding: 20px;">
-    <h1 style="font-size: 22px; margin: 0 0 14px;">Confirma tu suscripcion a HAVOC DISPATCH</h1>
-    <p style="margin: 0 0 14px;">
-      Recibimos una solicitud para suscribirte al newsletter semanal.
-    </p>
-    <p style="margin: 0 0 20px;">
-      Para confirmar, hace click en el siguiente enlace:
-    </p>
-    <p style="margin: 0 0 22px;">
-      <a href="${confirmUrl}" style="background:#111111;color:#ffffff;padding:10px 14px;text-decoration:none;display:inline-block;">
-        Confirmar suscripcion
-      </a>
-    </p>
-    <p style="font-size: 13px; color: #555555; margin: 0;">
-      Si no pediste esta suscripcion, podes ignorar este mensaje.
-    </p>
-  </div>
-`
+const domainFromEmail = email => {
+  const at = email.lastIndexOf('@')
+  if (at < 1 || at === email.length - 1) return ''
+  return email.slice(at + 1)
+}
 
 export async function POST(req) {
   let email = ''
@@ -48,42 +31,39 @@ export async function POST(req) {
     return NextResponse.json({ ok: false, error: 'invalid_email' }, { status: 400 })
   }
 
+  const domain = domainFromEmail(email)
   try {
-    const secret = process.env.NEWSLETTER_CONFIRM_SECRET?.trim()
-    if (!secret) throw new Error('Missing env var: NEWSLETTER_CONFIRM_SECRET')
+    const routable = await domainLikelyAcceptsMail(domain)
+    if (!routable) {
+      return NextResponse.json({ ok: false, error: 'invalid_email_domain' }, { status: 400 })
+    }
+  } catch {
+    return NextResponse.json({ ok: false, error: 'invalid_email_domain' }, { status: 400 })
+  }
 
+  try {
     const resend = getResendClient()
     const existingContact = await getResendContactByEmail({ resend, email })
     if (isResendContactSubscribed(existingContact)) {
-      return jsonOk({
+      return NextResponse.json({
         ok: true,
         status: NEWSLETTER_SUBSCRIBE_STATUSES.ALREADY_SUBSCRIBED,
         message: 'Este email ya está suscripto al newsletter.'
       })
     }
 
-    const from = getNewsletterSender()
-    const baseUrl = getAppBaseUrl()
-    const token = buildConfirmationToken({ email, secret })
-    const confirmUrl = `${baseUrl}/api/newsletter/confirm?token=${encodeURIComponent(token)}`
+    await upsertResendContact({ resend, email })
+    const savedContact = await getResendContactByEmail({ resend, email })
+    if (!isResendContactSubscribed(savedContact)) {
+      return NextResponse.json({ ok: false, error: 'subscribe_failed' }, { status: 502 })
+    }
 
-    await resend.emails.send({
-      from,
-      to: email,
-      subject: 'Confirma tu suscripcion a HAVOC DISPATCH',
-      html: confirmationEmailHtml({ confirmUrl })
-    })
-
-    return jsonOk({
+    return NextResponse.json({
       ok: true,
-      status: NEWSLETTER_SUBSCRIBE_STATUSES.CONFIRMATION_SENT,
-      message: 'Si el email es valido, te enviamos un enlace de confirmacion.'
+      status: NEWSLETTER_SUBSCRIBE_STATUSES.SUBSCRIBED,
+      message: 'Listo, ya estás suscripto al newsletter.'
     })
   } catch {
-    return jsonOk({
-      ok: true,
-      status: NEWSLETTER_SUBSCRIBE_STATUSES.CONFIRMATION_SENT,
-      message: 'Si el email es valido, te enviamos un enlace de confirmacion.'
-    })
+    return NextResponse.json({ ok: false, error: 'subscribe_failed' }, { status: 502 })
   }
 }

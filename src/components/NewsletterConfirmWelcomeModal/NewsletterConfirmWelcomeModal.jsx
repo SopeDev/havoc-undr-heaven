@@ -1,6 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import {
+  setNewsletterSubscriber,
+  setNewsletterConfirmedWithoutEmail
+} from '../../lib/newsletter/subscriberLocalStorage'
 
 export default function NewsletterConfirmWelcomeModal({ subscribeStatus }) {
   const [isOpen, setIsOpen] = useState(() => subscribeStatus === 'confirmed')
@@ -22,7 +26,14 @@ export default function NewsletterConfirmWelcomeModal({ subscribeStatus }) {
     if (subscribeStatus !== 'confirmed') return
     const currentUrl = new URL(window.location.href)
     const next = new URLSearchParams(currentUrl.search)
+    const sub = (next.get('subscribe') || '').trim().toLowerCase()
+    if (sub !== 'confirmed') return
+    const rawEmail = next.get('confirmed_email') || ''
     next.delete('subscribe')
+    next.delete('confirmed_email')
+    const trimmed = rawEmail.trim().toLowerCase()
+    if (trimmed && trimmed.includes('@')) setNewsletterSubscriber(trimmed)
+    else setNewsletterConfirmedWithoutEmail()
     const nextQuery = next.toString()
     const target = `${currentUrl.pathname}${nextQuery ? `?${nextQuery}` : ''}${currentUrl.hash || ''}`
     window.history.replaceState(window.history.state, '', target)

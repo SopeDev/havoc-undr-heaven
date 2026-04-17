@@ -3,6 +3,11 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useNewsletterSubscriber } from '../../hooks/useNewsletterSubscriber'
+import {
+  OPEN_NEWSLETTER_MODAL_EVENT,
+  SESSION_NEWSLETTER_MODAL_FLAG
+} from '../../lib/newsletter/subscriberLocalStorage'
 import NewsletterSignupModal from '../NewsletterSignupModal/NewsletterSignupModal'
 
 const NAV_ITEMS = [
@@ -13,6 +18,7 @@ const NAV_ITEMS = [
 
 export default function SiteHeader() {
   const pathname = usePathname()
+  const { subscribed } = useNewsletterSubscriber()
   const [openMenu, setOpenMenu] = useState(null)
   const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false)
   const dropdownRootRef = useRef(null)
@@ -32,6 +38,23 @@ export default function SiteHeader() {
     document.addEventListener('click', onDocClick)
     return () => document.removeEventListener('click', onDocClick)
   }, [])
+
+  useEffect(() => {
+    const open = () => setIsNewsletterModalOpen(true)
+    window.addEventListener(OPEN_NEWSLETTER_MODAL_EVENT, open)
+    return () => window.removeEventListener(OPEN_NEWSLETTER_MODAL_EVENT, open)
+  }, [])
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(SESSION_NEWSLETTER_MODAL_FLAG) === '1') {
+        sessionStorage.removeItem(SESSION_NEWSLETTER_MODAL_FLAG)
+        setIsNewsletterModalOpen(true)
+      }
+    } catch {
+      // ignore
+    }
+  }, [pathname])
 
   const goSearch = () => {
     const q = (searchInputRef.current?.value || '').trim()
@@ -90,9 +113,11 @@ export default function SiteHeader() {
           </li>
         </ul>
 
-        <button className='nav-subscribe' type='button' onClick={() => setIsNewsletterModalOpen(true)}>
-          Suscribirse
-        </button>
+        {!subscribed ? (
+          <button className='nav-subscribe' type='button' onClick={() => setIsNewsletterModalOpen(true)}>
+            Suscribirse
+          </button>
+        ) : null}
       </nav>
 
       <div className='masthead'>
