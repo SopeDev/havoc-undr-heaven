@@ -1,13 +1,31 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useState } from 'react'
 import { FEED_PAGE_SIZE, feedLoadMoreStartOffset } from '../../lib/feedPagination'
 import NewsletterArticleLink from '../NewsletterArticleLink/NewsletterArticleLink'
 
+function FeedRowThumb({ url, alt }) {
+  if (!url) return null
+  return (
+    <div className='feed-thumb feed-thumb--photo'>
+      <Image
+        src={url}
+        alt={alt || ''}
+        width={260}
+        height={176}
+        className='feed-thumb-img'
+        sizes='130px'
+      />
+    </div>
+  )
+}
+
 function homeItem(item) {
+  const hasImg = Boolean(item.coverUrl)
   return (
     <NewsletterArticleLink key={item.href} href={item.href} categorySlug={item.categorySlug}>
-      <div className='feed-item' role='link' tabIndex={0}>
+      <div className={`feed-item${hasImg ? '' : ' feed-item--no-thumb'}`} role='link' tabIndex={0}>
         <div>
           <div className='feed-eyebrow'>
             <span className='feed-cat'>{item.cat}</span>
@@ -19,7 +37,7 @@ function homeItem(item) {
             {item.dateStr} · {item.timeStr}
           </div>
         </div>
-        <div className='feed-thumb' />
+        <FeedRowThumb url={item.coverUrl} alt={item.coverAlt} />
       </div>
     </NewsletterArticleLink>
   )
@@ -27,9 +45,10 @@ function homeItem(item) {
 
 function categoriaItem(item, categorySlugProp) {
   const catSlug = categorySlugProp || item.categorySlug
+  const hasImg = Boolean(item.coverUrl)
   return (
     <NewsletterArticleLink key={item.href} href={item.href} categorySlug={catSlug}>
-      <div className='feed-item' role='link' tabIndex={0}>
+      <div className={`feed-item${hasImg ? '' : ' feed-item--no-thumb'}`} role='link' tabIndex={0}>
         <div>
           <div className='feed-item-eyebrow'>
             <span className='cat-tag'>{item.cat}</span>
@@ -41,16 +60,17 @@ function categoriaItem(item, categorySlugProp) {
             {item.date} · {item.time}
           </div>
         </div>
-        <div className='feed-thumb' />
+        <FeedRowThumb url={item.coverUrl} alt={item.coverAlt} />
       </div>
     </NewsletterArticleLink>
   )
 }
 
 function temaItem(item) {
+  const hasImg = Boolean(item.coverUrl)
   return (
     <NewsletterArticleLink key={item.href || item.title} href={item.href || '#'} categorySlug={item.categorySlug}>
-      <div className='feed-item' role='link' tabIndex={0}>
+      <div className={`feed-item${hasImg ? '' : ' feed-item--no-thumb'}`} role='link' tabIndex={0}>
         <div>
           <div className='feed-eyebrow'>
             <span className='cat-tag'>{item.cat}</span>
@@ -62,7 +82,7 @@ function temaItem(item) {
             {item.date} · {item.time}
           </div>
         </div>
-        <div className='feed-thumb' />
+        <FeedRowThumb url={item.coverUrl} alt={item.coverAlt} />
       </div>
     </NewsletterArticleLink>
   )

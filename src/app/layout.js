@@ -36,6 +36,11 @@ export const metadata = {
   description: 'Publicaciones de análisis geopolítico',
 }
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export default function RootLayout({ children }) {
   return (
     <html lang='es' className={fontVariables} suppressHydrationWarning>

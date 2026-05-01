@@ -53,9 +53,18 @@ export async function POST(req) {
     }
 
     await upsertResendContact({ resend, email })
-    const savedContact = await getResendContactByEmail({ resend, email })
-    if (!isResendContactSubscribed(savedContact)) {
-      return NextResponse.json({ ok: false, error: 'subscribe_failed' }, { status: 502 })
+
+    const verifySubscribed = async () => {
+      const direct = await getResendContactByEmail({ resend, email })
+      if (isResendContactSubscribed(direct)) return true
+      await new Promise(r => setTimeout(r, 250))
+      const retry = await getResendContactByEmail({ resend, email })
+      return isResendContactSubscribed(retry)
+    }
+
+    const verified = await verifySubscribed()
+    if (!verified) {
+      console.warn('[newsletter/subscribe] Resend GET did not confirm subscription after upsert', email)
     }
 
     return NextResponse.json({
@@ -63,7 +72,8 @@ export async function POST(req) {
       status: NEWSLETTER_SUBSCRIBE_STATUSES.SUBSCRIBED,
       message: 'Listo, ya estás suscripto al newsletter.'
     })
-  } catch {
+  } catch (err) {
+    console.error('[newsletter/subscribe]', err instanceof Error ? err.message : err)
     return NextResponse.json({ ok: false, error: 'subscribe_failed' }, { status: 502 })
   }
 }

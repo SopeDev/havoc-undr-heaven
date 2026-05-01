@@ -1,5 +1,6 @@
 import { FEED_PAGE_SIZE } from '../feedPagination'
 import { categoryHrefSlug, formatArticleDate } from './articleView'
+import { urlForCardImage } from './image'
 
 function tagLineFromDoc(doc) {
   return Array.isArray(doc.tagNames) ? doc.tagNames.filter(Boolean).join(' · ') : ''
@@ -8,6 +9,8 @@ function tagLineFromDoc(doc) {
 function mapDocToHero(doc, sectionTitle) {
   const mins = doc.readingTimeMinutes
   const timeRead = typeof mins === 'number' ? `${mins} min de lectura` : '—'
+  const altFromCms =
+    doc.coverImage && typeof doc.coverImage.alt === 'string' ? doc.coverImage.alt.trim() : ''
   return {
     cat: doc.categoryName || sectionTitle,
     categorySlug: categoryHrefSlug(doc.categoryName, doc.categorySlug),
@@ -16,13 +19,17 @@ function mapDocToHero(doc, sectionTitle) {
     deck: doc.deck || '',
     date: formatArticleDate(doc.publishedAt),
     time: timeRead,
-    href: `/articulos/${doc.slug}`
+    href: `/articulos/${doc.slug}`,
+    coverUrl: urlForCardImage(doc.coverImage) || null,
+    coverAlt: altFromCms || doc.title || ''
   }
 }
 
 export function mapDocToItem(doc, sectionTitle) {
   const mins = doc.readingTimeMinutes
   const timeShort = typeof mins === 'number' ? `${mins} min` : '—'
+  const altFromCms =
+    doc.coverImage && typeof doc.coverImage.alt === 'string' ? doc.coverImage.alt.trim() : ''
   return {
     cat: doc.categoryName || sectionTitle,
     categorySlug: categoryHrefSlug(doc.categoryName, doc.categorySlug),
@@ -31,7 +38,9 @@ export function mapDocToItem(doc, sectionTitle) {
     excerpt: doc.deck || '',
     date: formatArticleDate(doc.publishedAt),
     time: timeShort,
-    href: `/articulos/${doc.slug}`
+    href: `/articulos/${doc.slug}`,
+    coverUrl: urlForCardImage(doc.coverImage) || null,
+    coverAlt: altFromCms || doc.title || ''
   }
 }
 

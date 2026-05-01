@@ -49,7 +49,11 @@ export const homePageArticlesQuery = groq`
     readingTimeMinutes,
     "categoryName": category->name,
     "categorySlug": category->slug.current,
-    "tagNames": tags[]->name
+    "tagNames": tags[]->name,
+    coverImage{
+      asset,
+      alt
+    }
   }
 `
 
@@ -62,7 +66,11 @@ export const homePageArticlesRangeQuery = groq`
     readingTimeMinutes,
     "categoryName": category->name,
     "categorySlug": category->slug.current,
-    "tagNames": tags[]->name
+    "tagNames": tags[]->name,
+    coverImage{
+      asset,
+      alt
+    }
   }
 `
 
@@ -130,7 +138,11 @@ export const articlesByCategorySlugRangeQuery = groq`
     readingTimeMinutes,
     "categoryName": category->name,
     "categorySlug": category->slug.current,
-    "tagNames": tags[]->name
+    "tagNames": tags[]->name,
+    coverImage{
+      asset,
+      alt
+    }
   }
 `
 
@@ -143,7 +155,11 @@ export const articlesByCategorySlugAndTagSlugRangeQuery = groq`
     readingTimeMinutes,
     "categoryName": category->name,
     "categorySlug": category->slug.current,
-    "tagNames": tags[]->name
+    "tagNames": tags[]->name,
+    coverImage{
+      asset,
+      alt
+    }
   }
 `
 
@@ -268,7 +284,11 @@ export const articlesByTagSlugRangeQuery = groq`
     "categoryName": category->name,
     "categorySlug": category->slug.current,
     "tagNames": tags[]->name,
-    "tagList": tags[]->{ name, "slug": slug.current }
+    "tagList": tags[]->{ name, "slug": slug.current },
+    coverImage{
+      asset,
+      alt
+    }
   }
 `
 
@@ -328,12 +348,16 @@ export const newsletterIssuesForWebQuery = groq`
       "categoryName": category->name,
       "categorySlug": category->slug.current,
       "tagNames": tags[]->name,
-      "tagSlugs": tags[]->slug.current
+      "tagSlugs": tags[]->slug.current,
+      coverImage{
+        asset,
+        alt
+      }
     }
   }
 `
 
-/** Homepage “Despachos recientes”: last 3 sent issues, no article expansion */
+/** Homepage “Despachos recientes”: last 3 sent issues (dispatches do not have images) */
 export const newsletterIssuesHomeDispatchesQuery = groq`
   *[_type == "newsletterIssue" && defined(emailSentAt) && emailSentAt <= now()] | order(issuedAt desc)[0..2] {
     _id,

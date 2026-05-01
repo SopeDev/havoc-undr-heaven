@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import NewsletterArticleLink from '../../../components/NewsletterArticleLink/NewsletterArticleLink'
 import SiteHeader from '../../../components/SiteHeader/SiteHeader'
@@ -12,6 +13,7 @@ import { fetchNewsletterIssuesForWeb } from '../../../lib/sanity/newsletterIssue
 import { fetchFocosSidebarByUpdated } from '../../../lib/sanity/focos'
 import { fetchNavLists } from '../../../lib/sanity/navigation'
 import { categoryHrefSlug, formatArticleDate } from '../../../lib/sanity/articleView'
+import { urlForCardImage } from '../../../lib/sanity/image'
 import styles from './page.module.css'
 
 export const revalidate = 60
@@ -74,6 +76,8 @@ function articleSlugFromDoc(doc) {
 function mapIssueArticleToFeedRow(doc) {
   const slug = articleSlugFromDoc(doc)
   if (!slug) return null
+  const altFromCms =
+    doc.coverImage && typeof doc.coverImage.alt === 'string' ? doc.coverImage.alt.trim() : ''
   return {
     cat: doc.categoryName || 'Análisis',
     categorySlug: categoryHrefSlug(doc.categoryName, doc.categorySlug),
@@ -82,7 +86,9 @@ function mapIssueArticleToFeedRow(doc) {
     excerpt: doc.deck || '',
     date: formatArticleDate(doc.publishedAt),
     time: readingTimeShort(doc.readingTimeMinutes),
-    href: `/articulos/${slug}`
+    href: `/articulos/${slug}`,
+    coverUrl: urlForCardImage(doc.coverImage) || null,
+    coverAlt: altFromCms || doc.title || ''
   }
 }
 
@@ -221,7 +227,11 @@ export default async function NewsletterArchivePage({ searchParams }) {
       const row = mapIssueArticleToFeedRow(doc)
       return row ? [row] : []
     })
-    return { issue, safeRows, themeAgg }
+    return {
+      issue,
+      safeRows,
+      themeAgg
+    }
   })
   const showTemaEmptyMessage =
     Boolean(temaSlug) && issues.length > 0 && !issueBundles.some(b => b.safeRows.length > 0)
@@ -338,7 +348,6 @@ export default async function NewsletterArchivePage({ searchParams }) {
             return (
               <section key={issue._id} className={styles.issueBlock} aria-labelledby={`issue-${issue._id}`}>
                 <div className='feed-hero feed-hero--dispatch'>
-                  <div className='feed-hero-image' aria-hidden />
                   <div className='feed-hero-eyebrow'>
                     <span className='cat-tag'>Dispatch</span>
                     {themeLine ? <span className='topic-tag'>{themeLine}</span> : null}
@@ -361,7 +370,11 @@ export default async function NewsletterArchivePage({ searchParams }) {
                   <div className={styles.articleList}>
                     {safeRows.map(item => (
                       <NewsletterArticleLink key={item.href} href={item.href} categorySlug={item.categorySlug}>
-                        <div className='feed-item' role='link' tabIndex={0}>
+                        <div
+                          className={`feed-item${item.coverUrl ? '' : ' feed-item--no-thumb'}`}
+                          role='link'
+                          tabIndex={0}
+                        >
                           <div>
                             <div className='feed-item-eyebrow'>
                               <span className='cat-tag'>{item.cat}</span>
@@ -373,7 +386,18 @@ export default async function NewsletterArchivePage({ searchParams }) {
                               {item.date} · {item.time}
                             </div>
                           </div>
-                          <div className='feed-thumb' />
+                          {item.coverUrl ? (
+                            <div className='feed-thumb feed-thumb--photo'>
+                              <Image
+                                src={item.coverUrl}
+                                alt={item.coverAlt || ''}
+                                width={260}
+                                height={176}
+                                className='feed-thumb-img'
+                                sizes='130px'
+                              />
+                            </div>
+                          ) : null}
                         </div>
                       </NewsletterArticleLink>
                     ))}

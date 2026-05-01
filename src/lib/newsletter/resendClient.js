@@ -38,10 +38,24 @@ export const upsertResendContact = async ({ resend, email }) => {
 
   if (!createRes?.error) return
 
-  const errMessage = createRes.error?.message || ''
-  if (errMessage.toLowerCase().includes('already exists')) return
+  const errMessage = (createRes.error?.message || '').toLowerCase()
+  const duplicate =
+    errMessage.includes('already exist') ||
+    errMessage.includes('already_exists') ||
+    errMessage.includes('duplicate')
 
-  throw new Error(errMessage || 'Unable to upsert contact in Resend')
+  if (duplicate) {
+    const updateRes = await resend.contacts.update({
+      email,
+      unsubscribed: false
+    })
+    if (updateRes?.error) {
+      throw new Error(updateRes.error.message || 'Unable to update contact in Resend')
+    }
+    return
+  }
+
+  throw new Error(createRes.error?.message || 'Unable to upsert contact in Resend')
 }
 
 export const getResendContactByEmail = async ({ resend, email }) => {
@@ -50,9 +64,10 @@ export const getResendContactByEmail = async ({ resend, email }) => {
   return lookupRes?.data || null
 }
 
+/** True when this contact should receive mail (not opted out). Resend usually sets `unsubscribed: false`; treat missing as subscribed. */
 export const isResendContactSubscribed = contact => {
   if (!contact || typeof contact !== 'object') return false
-  return contact.unsubscribed === false
+  return contact.unsubscribed !== true
 }
 
 const parsePositiveInt = value => {
@@ -83,7 +98,7 @@ export const listAllActiveResendContacts = async ({ resend, maxContacts }) => {
       const email = typeof c?.email === 'string' ? c.email.trim().toLowerCase() : ''
       if (!email || seen.has(email)) continue
       seen.add(email)
-      if (c.unsubscribed === false) out.push(email)
+      if (c.unsubscribed !== true) out.push(email)
       if (out.length >= configuredMax) break
     }
 

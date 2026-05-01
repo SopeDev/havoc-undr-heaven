@@ -1,4 +1,5 @@
 import { cache } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import SiteHeader from '../../../components/SiteHeader/SiteHeader'
@@ -148,7 +149,19 @@ export default async function TemaPage({ params }) {
             <>
               <NewsletterArticleLink href={tema.hero.href} categorySlug={tema.hero.categorySlug}>
                 <div className='feed-hero'>
-                  <div className='feed-hero-img' />
+                  {tema.hero.coverUrl ? (
+                    <div className='feed-hero-img feed-hero-img--photo'>
+                      <Image
+                        src={tema.hero.coverUrl}
+                        alt={tema.hero.coverAlt || tema.hero.title || ''}
+                        width={960}
+                        height={400}
+                        className='feed-hero-img-el'
+                        sizes='(max-width: 900px) 100vw, min(820px, 75vw)'
+                        priority
+                      />
+                    </div>
+                  ) : null}
                   <div className='feed-eyebrow'>
                     <span className='cat-tag'>{tema.hero.cat}</span>
                     <span className='topic-tag'>{tema.hero.tags}</span>

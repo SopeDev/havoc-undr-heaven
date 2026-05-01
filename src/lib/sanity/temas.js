@@ -1,6 +1,7 @@
 import { FEED_FIRST_PEEK_DOCS, FEED_PAGE_SIZE } from '../feedPagination'
 import { getSanityClient } from './client'
 import { categoryHrefSlug, formatArticleDate } from './articleView'
+import { urlForCardImage } from './image'
 import {
   articlesByTagSlugRangeQuery,
   countArticlesByTagSlugQuery,
@@ -52,6 +53,8 @@ function deriveSections(articles) {
 
 function mapArticleToHero(a) {
   const mins = a.readingTimeMinutes
+  const altFromCms =
+    a.coverImage && typeof a.coverImage.alt === 'string' ? a.coverImage.alt.trim() : ''
   return {
     cat: a.categoryName || 'Análisis',
     categorySlug: categoryHrefSlug(a.categoryName, a.categorySlug),
@@ -60,12 +63,16 @@ function mapArticleToHero(a) {
     deck: a.deck || '',
     date: formatArticleDate(a.publishedAt),
     time: typeof mins === 'number' ? `${mins} min de lectura` : '—',
-    href: `/articulos/${a.slug}`
+    href: `/articulos/${a.slug}`,
+    coverUrl: urlForCardImage(a.coverImage) || null,
+    coverAlt: altFromCms || a.title || ''
   }
 }
 
 export function mapArticleToFeedItem(a) {
   const mins = a.readingTimeMinutes
+  const altFromCms =
+    a.coverImage && typeof a.coverImage.alt === 'string' ? a.coverImage.alt.trim() : ''
   return {
     cat: a.categoryName || 'Análisis',
     categorySlug: categoryHrefSlug(a.categoryName, a.categorySlug),
@@ -74,7 +81,9 @@ export function mapArticleToFeedItem(a) {
     excerpt: a.deck || '',
     date: formatArticleDate(a.publishedAt),
     time: typeof mins === 'number' ? `${mins} min` : '—',
-    href: `/articulos/${a.slug}`
+    href: `/articulos/${a.slug}`,
+    coverUrl: urlForCardImage(a.coverImage) || null,
+    coverAlt: altFromCms || a.title || ''
   }
 }
 

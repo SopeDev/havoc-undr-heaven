@@ -1,15 +1,24 @@
 import { FEED_FIRST_PEEK_DOCS, FEED_PAGE_SIZE } from '../feedPagination'
 import {
   getHottestSidebarRawDocs,
-  HOTTEST_ASIDE_LIMIT,
   HOTTEST_SANITY_POOL,
   isUmamiAnalyticsConfigured
 } from '../umami/hottestArticles'
+import { isSanityConfigured } from './client'
 import { categoryHrefSlug, formatArticleDate } from './articleView'
+import { urlForCardImage } from './image'
 import { fetchHomeArticles, fetchHomeArticlesRange } from './articles'
 import { fetchFocosSidebarByUpdated } from './focos'
 import { fetchHomeDispatchItems } from './newsletterIssues'
 import { fetchNavLists } from './navigation'
+
+/** Hard cap for “En el Spotlight” on home, categoría, and tema sidebars. */
+export const SPOTLIGHT_MAX_ARTICLES = 5
+
+function capSpotlightRows(rows) {
+  if (!Array.isArray(rows)) return []
+  return rows.slice(0, SPOTLIGHT_MAX_ARTICLES)
+}
 
 function tagLineFromNames(names) {
   return Array.isArray(names) ? names.filter(Boolean).join(' · ') : ''
@@ -17,6 +26,8 @@ function tagLineFromNames(names) {
 
 export function mapRawDocToHomeRow(doc) {
   const mins = doc.readingTimeMinutes
+  const altFromCms =
+    doc.coverImage && typeof doc.coverImage.alt === 'string' ? doc.coverImage.alt.trim() : ''
   return {
     cat: doc.categoryName || 'Análisis',
     categorySlug: categoryHrefSlug(doc.categoryName, doc.categorySlug),
@@ -26,64 +37,71 @@ export function mapRawDocToHomeRow(doc) {
     dateStr: formatArticleDate(doc.publishedAt),
     timeStr: typeof mins === 'number' ? `${mins} min` : '—',
     timeReadStr: typeof mins === 'number' ? `${mins} min de lectura` : '—',
-    href: `/articulos/${doc.slug}`
+    href: `/articulos/${doc.slug}`,
+    coverUrl: urlForCardImage(doc.coverImage) || null,
+    coverAlt: altFromCms || doc.title || ''
   }
-}
-
-/** @param {Array<ReturnType<typeof mapRawDocToHomeRow>>} rows */
-export function partitionHomeArticles(rows) {
-  if (!Array.isArray(rows) || rows.length === 0) {
-    return { hero: null, feedItems: [], sidebarArticles: [] }
-  }
-  const hero = rows[0]
-  const feedItems = rows.slice(1, 1 + FEED_PAGE_SIZE)
-  const sidebarArticles = rows.slice(1 + FEED_PAGE_SIZE, 1 + FEED_PAGE_SIZE + 3)
-  return { hero, feedItems, sidebarArticles }
 }
 
 /**
- * Same ranking / fallback as the home aside “En el Spotlight” block.
- * @param {Array<Record<string, unknown>>} docs raw rows from fetchHomeArticles
- * @returns {Promise<Array<ReturnType<typeof mapRawDocToHomeRow>>>}
+ * Spotlight aside: independent of hero/feed indices — may overlap the main feed.
+ * With Umami: rank pool by traffic (no exclusions). Otherwise: most recent first.
  */
 async function resolveSpotlightSidebarArticlesFromDocs(docs) {
   if (!Array.isArray(docs) || docs.length === 0) return []
-  const articleRows = docs.map(mapRawDocToHomeRow)
-  const { sidebarArticles: partitionSidebar } = partitionHomeArticles(articleRows)
-  let sidebarArticles = partitionSidebar
+
   if (isUmamiAnalyticsConfigured()) {
-    const excluded = new Set(
-      articleRows
-        .slice(0, 1 + FEED_PAGE_SIZE)
-        .map(r => r.href?.replace(/^\/articulos\//, '') || '')
-        .filter(Boolean)
-        .map(s => s.toLowerCase())
-    )
-    const hottestDocs = await getHottestSidebarRawDocs(docs, excluded, HOTTEST_ASIDE_LIMIT)
+    const hottestDocs = await getHottestSidebarRawDocs(docs, new Set(), SPOTLIGHT_MAX_ARTICLES)
     if (hottestDocs.length > 0) {
-      sidebarArticles = hottestDocs.map(mapRawDocToHomeRow)
+      return capSpotlightRows(hottestDocs.map(mapRawDocToHomeRow))
     }
   }
-  return sidebarArticles
+
+  const n = Math.min(SPOTLIGHT_MAX_ARTICLES, docs.length)
+  return docs.slice(0, n).map(mapRawDocToHomeRow)
 }
 
-/** Fetches and ranks spotlight aside rows (for home, category pages, etc.). */
+/** Fetches spotlight rows for sidebars (home, category, tema). */
 export async function fetchSpotlightSidebarArticles() {
-  const articleLimit = isUmamiAnalyticsConfigured() ? HOTTEST_SANITY_POOL : 8
-  const docs = await fetchHomeArticles(articleLimit)
-  return resolveSpotlightSidebarArticlesFromDocs(docs)
+  const poolLimit = isUmamiAnalyticsConfigured() ? HOTTEST_SANITY_POOL : SPOTLIGHT_MAX_ARTICLES
+  const docs = await fetchHomeArticles(poolLimit)
+  return capSpotlightRows(await resolveSpotlightSidebarArticlesFromDocs(docs))
 }
 
 export async function fetchHomePageData() {
-  const articleLimit = isUmamiAnalyticsConfigured() ? HOTTEST_SANITY_POOL : 8
-
-  const [nav, peekDocs, poolDocs, focos, dispatchItems] = await Promise.all([
+  const [nav, peekDocs, spotlightFromPool, focos, dispatchItems] = await Promise.all([
     fetchNavLists(),
     fetchHomeArticlesRange(0, FEED_FIRST_PEEK_DOCS),
-    fetchHomeArticles(articleLimit),
+    fetchSpotlightSidebarArticles(),
     fetchFocosSidebarByUpdated(5),
     fetchHomeDispatchItems()
   ])
+
+  let sidebarArticles = Array.isArray(spotlightFromPool) ? spotlightFromPool : []
+
+  /** Same articles as hero/feed peek — guarantees Spotlight when the pool fetch failed or returned []. */
+  const usedPeekFallback =
+    sidebarArticles.length === 0 &&
+    Array.isArray(peekDocs) &&
+    peekDocs.length > 0
+
+  if (usedPeekFallback) {
+    const n = Math.min(SPOTLIGHT_MAX_ARTICLES, peekDocs.length)
+    sidebarArticles = peekDocs.slice(0, n).map(mapRawDocToHomeRow)
+  }
+
+  sidebarArticles = capSpotlightRows(sidebarArticles)
+
+  if (process.env.NODE_ENV === 'development') {
+    console.info('[havoc/home][server] En el Spotlight — check this terminal (not the browser DevTools)', {
+      sanityConfigured: isSanityConfigured(),
+      peekDocsCount: peekDocs?.length ?? 0,
+      spotlightPoolCount: spotlightFromPool?.length ?? 0,
+      finalSidebarCount: sidebarArticles.length,
+      usedPeekFallback,
+      umamiRanking: isUmamiAnalyticsConfigured()
+    })
+  }
 
   const categories = nav.categories
   const tags = nav.tags
@@ -105,8 +123,6 @@ export async function fetchHomePageData() {
       ? peekDocs.slice(1, 1 + FEED_PAGE_SIZE).map(mapRawDocToHomeRow)
       : []
   const feedHasMore = Array.isArray(peekDocs) && peekDocs.length > 1 + FEED_PAGE_SIZE
-
-  const sidebarArticles = await resolveSpotlightSidebarArticlesFromDocs(poolDocs)
 
   return {
     categories,

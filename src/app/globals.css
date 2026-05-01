@@ -710,6 +710,31 @@ footer {
   justify-content: center;
 }
 
+.hero-image.hero-image--photo {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  display: block;
+  background: var(--black);
+}
+
+.hero-image.hero-image--photo::after {
+  content: none;
+}
+
+.hero-image-img {
+  width: 100%;
+  height: auto;
+  max-height: min(480px, 56vw);
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.2s;
+}
+
+a:hover .hero-image-img {
+  opacity: 0.7;
+}
+
 .hero-image::after {
   content: 'IMAGEN DESTACADA';
   font-size: 9px;
@@ -790,6 +815,25 @@ footer {
   flex-shrink: 0;
 }
 
+.feed-item--no-thumb {
+  grid-template-columns: 1fr;
+}
+
+.feed-thumb.feed-thumb--photo {
+  padding: 0;
+  background: transparent;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.feed-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 /* ── SIDEBAR ── */
 .sidebar {
   padding: 48px 0 48px 36px;
@@ -797,8 +841,6 @@ footer {
 
 .sidebar-block {
   margin-bottom: 36px;
-  padding-bottom: 36px;
-  border-bottom: 1px solid var(--border);
 }
 
 .sidebar-block:last-child {
@@ -869,8 +911,7 @@ footer {
 }
 
 .sidebar-art {
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 14px 0 18px;
   cursor: pointer;
   transition: opacity 0.2s;
 }
@@ -879,12 +920,42 @@ footer {
   opacity: 0.7;
 }
 
-.sidebar-art:first-child {
+/*
+ * Rows are usually wrapped in Next.js <Link>; inner .sidebar-art is the only child of <a>,
+ * so :last-child matched every row and stripped all dividers. Scope first/last to the block.
+ */
+.sidebar-block > a:not(:last-child) .sidebar-art {
+  padding-bottom: 8px;
+}
+
+.sidebar-block > a:last-child .sidebar-art {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sidebar-block > a:first-of-type .sidebar-art {
   padding-top: 0;
 }
 
-.sidebar-art:last-child {
+.sidebar-block > .sidebar-art:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 18px;
+}
+
+.sidebar-block > .sidebar-art:last-child {
   border-bottom: none;
+  padding-bottom: 0;
+}
+
+.sidebar-block > a.sidebar-art:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+  padding-bottom: 14px;
+}
+
+.sidebar-block > a.sidebar-art:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
   padding-bottom: 0;
 }
 
@@ -965,6 +1036,22 @@ a.dispatch-card:hover .dispatch-title {
 .dispatch-card:not(:first-child) {
   padding-left: 24px;
   border-left: 1px solid var(--border);
+}
+
+.dispatch-card-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #ebebeb;
+}
+
+.dispatch-card-image-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .dispatch-eyebrow {
@@ -2706,6 +2793,31 @@ a.feed-filter {
   color: #CCC;
 }
 
+.feed-hero-img.feed-hero-img--photo {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  display: block;
+  background: #111;
+}
+
+.feed-hero-img.feed-hero-img--photo::after {
+  content: none;
+}
+
+.feed-hero-img-el {
+  width: 100%;
+  height: auto;
+  max-height: min(320px, 50vw);
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.2s;
+}
+
+.feed-hero:hover .feed-hero-img-el {
+  opacity: 0.7;
+}
+
 .feed-hero-eyebrow {
   display: flex;
   gap: 10px;
@@ -2738,6 +2850,10 @@ a.feed-filter {
   color: var(--muted);
   display: flex;
   gap: 14px;
+}
+
+.tema-feed .feed-item.feed-item--no-thumb {
+  grid-template-columns: 1fr;
 }
 
 .tema-feed .feed-item {
@@ -3123,6 +3239,35 @@ a.topic-pill {
   font-size: 9px;
   letter-spacing: 3px;
   color: #CCC;
+}
+
+.cat-feed .feed-hero-image.feed-hero-image--photo {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  display: block;
+  background: #111;
+}
+
+.cat-feed .feed-hero-image.feed-hero-image--photo::after {
+  content: none;
+}
+
+.cat-feed .feed-hero-image-img {
+  width: 100%;
+  height: auto;
+  max-height: min(340px, 52vw);
+  object-fit: cover;
+  display: block;
+  transition: opacity 0.2s;
+}
+
+.cat-feed .feed-hero:hover .feed-hero-image-img {
+  opacity: 0.7;
+}
+
+.cat-feed .feed-item.feed-item--no-thumb {
+  grid-template-columns: 1fr;
 }
 
 .cat-feed .feed-hero-eyebrow {

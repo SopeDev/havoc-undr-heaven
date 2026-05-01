@@ -17,12 +17,26 @@ export default function NewsletterSignup({
   description = 'Análisis geopolítico directo a tu correo cada semana.',
   onSuccess
 }) {
-  const { subscribed } = useNewsletterSubscriber()
+  const { subscribed, email: storedEmail } = useNewsletterSubscriber()
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  if (subscribed) return null
+  /** Sidebar / inline: hide entire box when already subscribed. Modal must stay visible with copy after subscribe (otherwise localStorage flips and content disappears). */
+  if (subscribed && variant !== 'modal') return null
+
+  if (subscribed && variant === 'modal') {
+    return (
+      <div className='newsletter-box newsletter-box--modal'>
+        <h3>HAVOC DISPATCH</h3>
+        <p style={{ marginBottom: 0 }}>
+          {storedEmail
+            ? `Ya estás suscripto como ${storedEmail}. Gracias por leernos.`
+            : 'Ya estás suscripto al newsletter. Gracias por leernos.'}
+        </p>
+      </div>
+    )
+  }
 
   const statusStyles = {
     marginTop: 10,

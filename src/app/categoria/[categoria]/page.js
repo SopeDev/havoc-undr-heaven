@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
 import SiteHeader from '../../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../../components/SiteFooter/SiteFooter'
@@ -197,7 +198,19 @@ export default async function CategoriaPage({ params, searchParams }) {
           {!data.feedEmpty && data.hero ? (
             <NewsletterArticleLink href={data.hero.href} categorySlug={data.hero.categorySlug}>
               <div className='feed-hero' role='link' tabIndex={0}>
-                <div className='feed-hero-image' />
+                {data.hero.coverUrl ? (
+                  <div className='feed-hero-image feed-hero-image--photo'>
+                    <Image
+                      src={data.hero.coverUrl}
+                      alt={data.hero.coverAlt || data.hero.title || ''}
+                      width={960}
+                      height={400}
+                      className='feed-hero-image-img'
+                      sizes='(max-width: 900px) 100vw, min(820px, 75vw)'
+                      priority
+                    />
+                  </div>
+                ) : null}
                 <div className='feed-hero-eyebrow'>
                   <span className='cat-tag'>{data.hero.cat}</span>
                   <span className='topic-tag'>{data.hero.topic}</span>

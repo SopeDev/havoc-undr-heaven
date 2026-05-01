@@ -1,15 +1,17 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import FeedLoadMore from '../FeedLoadMore/FeedLoadMore'
 import SiteHeader from '../SiteHeader/SiteHeader'
 import SiteFooter from '../SiteFooter/SiteFooter'
 import NewsletterSidebarBlock from '../NewsletterSidebarBlock/NewsletterSidebarBlock'
 import NewsletterArticleLink from '../NewsletterArticleLink/NewsletterArticleLink'
+import HomeSpotlightDebug from './HomeSpotlightDebug'
 
 /**
  * @param {{
  *   categories: Array<{ name: string, slug: string }>,
  *   tags: Array<{ name: string, slug: string }>,
- *   hero: { cat: string, topic: string, title: string, excerpt: string, dateStr: string, timeReadStr: string, href: string } | null,
+ *   hero: { cat: string, topic: string, title: string, excerpt: string, dateStr: string, timeReadStr: string, href: string, coverUrl?: string | null, coverAlt?: string } | null,
  *   feedItems: Array<{ cat: string, topic: string, title: string, excerpt: string, dateStr: string, timeStr: string, href: string }>,
  *   feedHasMore: boolean,
  *   sidebarArticles: Array<{ cat: string, topic: string, title: string, excerpt: string, dateStr: string, href: string }>,
@@ -23,13 +25,20 @@ export default function Home({
   hero,
   feedItems,
   feedHasMore = false,
-  sidebarArticles,
+  sidebarArticles = [],
   dispatchItems,
   focoRows
 }) {
+  const spotlightTitles = sidebarArticles.map(s => s.title).filter(Boolean)
+  const showSpotlightDevLog = process.env.NODE_ENV === 'development'
+
   return (
     <>
       <SiteHeader />
+
+      {showSpotlightDevLog ? (
+        <HomeSpotlightDebug count={sidebarArticles.length} titles={spotlightTitles} />
+      ) : null}
 
       <div className='type-bar'>
         <Link href='/' className='type-item active'>Todo</Link>
@@ -75,7 +84,21 @@ export default function Home({
                   </NewsletterArticleLink>
                 </h1>
                 <p className='hero-deck'>{hero.excerpt}</p>
-                <div className='hero-image' />
+                {hero.coverUrl ? (
+                  <NewsletterArticleLink href={hero.href} categorySlug={hero.categorySlug}>
+                    <div className='hero-image hero-image--photo'>
+                      <Image
+                        src={hero.coverUrl}
+                        alt={hero.coverAlt || hero.title || ''}
+                        width={960}
+                        height={540}
+                        className='hero-image-img'
+                        sizes='(max-width: 900px) 100vw, 820px'
+                        priority
+                      />
+                    </div>
+                  </NewsletterArticleLink>
+                ) : null}
                 <div className='hero-meta'>
                   <span>{hero.dateStr}</span>
                   <span>{hero.timeReadStr}</span>
