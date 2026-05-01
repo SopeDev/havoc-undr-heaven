@@ -23,9 +23,14 @@ export const getAppBaseUrl = () => {
   const base =
     process.env.NEWSLETTER_BASE_URL?.trim() ||
     process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
-    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim()
+    process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim() ||
+    process.env.VERCEL_URL?.trim()
 
-  if (!base) throw new Error('Missing env var: NEWSLETTER_BASE_URL (or NEXT_PUBLIC_SITE_URL)')
+  if (!base) {
+    throw new Error(
+      'Missing public site URL: set NEWSLETTER_BASE_URL or NEXT_PUBLIC_SITE_URL (Vercel usually has VERCEL_URL; we use it as fallback).'
+    )
+  }
 
   return base.startsWith('http') ? base : `https://${base}`
 }
