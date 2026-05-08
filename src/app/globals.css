@@ -4603,12 +4603,17 @@ a.topic-pill {
 
 .foco-detail-page .indicator-name {
   color: var(--mid);
+  flex: 1 1 auto;
+  text-align: left;
+  padding-right: 14px;
 }
 
 .foco-detail-page .indicator-val {
   font-weight: 600;
   font-size: 11px;
   letter-spacing: 1px;
+  flex: 0 0 52%;
+  text-align: right;
 }
 
 .foco-detail-page .val-high {

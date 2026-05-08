@@ -56,7 +56,7 @@ export default defineType({
       name: 'includeInWeeklyNewsletter',
       title: 'Incluir en el Dispatch semanal',
       description:
-        'Marcá los textos del Dispatch. Podés dejarlo en true: el sitio público los muestra solo cuando “Liberado al sitio el” tiene fecha y ya pasó. Completá Deck / excerpt para el correo (“Leer más”).',
+        'Marca los textos del Dispatch. Puedes dejarlo en true: el sitio público los muestra solo cuando “Liberado al sitio el” tiene fecha y ya pasó. Completa Deck / excerpt para el correo (“Leer más”).',
       type: 'boolean',
       initialValue: false
     }),

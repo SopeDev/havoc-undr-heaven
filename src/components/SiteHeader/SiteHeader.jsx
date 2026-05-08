@@ -13,7 +13,7 @@ import NewsletterSignupModal from '../NewsletterSignupModal/NewsletterSignupModa
 const NAV_ITEMS = [
   { id: 'inicio', label: 'Inicio', href: '/' },
   { id: 'nosotros', label: 'Nosotros', href: '/nosotros' },
-  { id: 'redes', label: 'Redes', href: '/categoria/redes' }
+  { id: 'redes', label: 'Redes', href: '/redes' }
 ] 
 
 export default function SiteHeader() {
@@ -25,7 +25,7 @@ export default function SiteHeader() {
   const searchInputRef = useRef(null)
 
   const [todayLabel] = useState(() => {
-    return new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
+    return new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
   })
 
   useEffect(() => {
@@ -94,7 +94,6 @@ export default function SiteHeader() {
               <Link href='/categoria/analisis'>Análisis</Link>
               <Link href='/categoria/reflexiones'>Reflexiones</Link>
               <Link href='/categoria/newsletter'>Newsletter</Link>
-              <Link href='/categoria/redes'>Redes</Link>
               <div className='nav-search-wrap'>
                 <input ref={searchInputRef} className='nav-search-input' type='text' placeholder='Buscar...' />
                 <button className='nav-search-btn' onClick={goSearch} aria-label='Buscar'>⌕</button>

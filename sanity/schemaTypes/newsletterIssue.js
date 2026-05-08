@@ -99,7 +99,7 @@ export default defineType({
   preview: {
     select: { title: 'title', sent: 'emailSentAt', issued: 'issuedAt', sendStatus: 'sendStatus' },
     prepare({ title, sent, issued, sendStatus }) {
-      const date = issued ? new Date(issued).toLocaleDateString('es') : ''
+      const date = issued ? new Date(issued).toLocaleDateString('es-AR') : ''
       const status = sendStatus || (sent ? 'sent' : 'draft')
       return {
         title: title || 'Sin título',

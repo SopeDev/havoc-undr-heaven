@@ -1,0 +1,278 @@
+.hero {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 48px;
+  border-bottom: 1px solid var(--border);
+}
+
+.heroKicker {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.heroTitle {
+  font-family: var(--font-display);
+  font-size: 64px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  line-height: 1;
+  margin: 0 0 12px;
+  color: var(--text);
+}
+
+.heroDeck {
+  max-width: 760px;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--mid);
+}
+
+.streams {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 48px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.streamCard {
+  border: 1px solid var(--border);
+  padding: 16px;
+  background: var(--white);
+  min-width: 0;
+}
+
+.streamHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+.streamTitle {
+  margin: 0;
+  font-size: 17px;
+  font-family: var(--font-serif);
+}
+
+.streamCta {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text);
+  text-decoration: none;
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  white-space: nowrap;
+}
+
+.streamCta:hover {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
+}
+
+.streamEmpty {
+  margin: 0;
+  color: var(--mid);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.streamList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.streamItem {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.streamItem:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.streamLink {
+  text-decoration: none;
+  color: inherit;
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 10px;
+}
+
+.streamThumb {
+  width: 92px;
+  height: 92px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  background: #ededed;
+}
+
+.streamBody {
+  min-width: 0;
+}
+
+.streamMeta {
+  font-size: 8px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.streamItemTitle {
+  margin: 0 0 4px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--text);
+  font-family: var(--font-serif);
+}
+
+.streamExcerpt {
+  margin: 0;
+  color: var(--mid);
+  font-size: 12px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.latest {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px 48px;
+}
+
+.latestHead {
+  padding: 8px 0 14px;
+  border-top: 2px solid var(--black);
+  border-bottom: 1px solid var(--border);
+}
+
+.latestTitle {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-family: var(--font-serif);
+  color: var(--text);
+}
+
+.latestDeck {
+  margin: 0;
+  font-size: 13px;
+  color: var(--mid);
+}
+
+.latestEmpty {
+  margin: 16px 0 0;
+  color: var(--mid);
+  font-size: 13px;
+}
+
+.latestGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+
+.latestCard {
+  text-decoration: none;
+  color: inherit;
+  padding: 14px 16px 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.latestCard:not(:nth-child(3n + 1)) {
+  border-left: 1px solid var(--border);
+  padding-left: 16px;
+}
+
+.latestCard:hover .latestCardTitle {
+  text-decoration: underline;
+}
+
+.latestPlatform {
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.latestCardTitle {
+  margin: 0 0 6px;
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.latestMeta {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1024px) {
+  .hero {
+    padding: 12px 16px 24px;
+  }
+
+  .heroTitle {
+    font-size: 48px;
+  }
+
+  .streams {
+    padding: 24px 16px;
+    grid-template-columns: 1fr;
+  }
+
+  .latest {
+    padding: 0 16px 36px;
+  }
+
+  .latestGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .latestCard {
+    border-left: none;
+    padding: 12px 0;
+  }
+
+  .latestCard:not(:nth-child(3n + 1)) {
+    border-left: none;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .streamLink {
+    grid-template-columns: 78px 1fr;
+  }
+
+  .streamThumb {
+    width: 78px;
+    height: 78px;
+  }
+
+  .heroDeck {
+    font-size: 14px;
+  }
+}
