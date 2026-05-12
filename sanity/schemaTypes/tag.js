@@ -1,4 +1,5 @@
 import { defineField, defineType } from 'sanity'
+import { editorialSlugify } from '../utils/slugify'
 
 export default defineType({
   name: 'tag',
@@ -10,7 +11,7 @@ export default defineType({
       name: 'slug',
       title: 'Slug',
       type: 'slug',
-      options: { source: 'name', maxLength: 96 },
+      options: { source: 'name', maxLength: 96, slugify: editorialSlugify },
       validation: Rule => Rule.required()
     }),
     defineField({
