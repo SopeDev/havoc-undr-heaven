@@ -2,7 +2,8 @@ import Link from 'next/link'
 import SiteFooter from '../../components/SiteFooter/SiteFooter'
 import SiteHeader from '../../components/SiteHeader/SiteHeader'
 import { fetchNavLists } from '../../lib/sanity/navigation'
-import { fetchRedesPageData } from '../../lib/social'
+import { fetchRedesSettings } from '../../lib/sanity/redesSettings'
+import { getRedesPageConfig } from '../../lib/social'
 import styles from './Redes.module.css'
 
 export const revalidate = 300
@@ -13,20 +14,11 @@ export const metadata = {
     'Instagram, YouTube y Spotify de Havoc Undr Heaven: análisis geopolítico en formatos breves, video y audio.'
 }
 
-const formatDate = iso => {
-  if (!iso) return 'Sin fecha'
-  const t = new Date(iso).getTime()
-  if (Number.isNaN(t)) return 'Sin fecha'
-  return new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(t))
-}
-
-const fallbackCopy = platform =>
-  platform === 'instagram'
-    ? 'Conectaremos el feed en vivo cuando se habiliten los permisos de plataforma. Mientras tanto, síguenos para ver el stream completo.'
-    : 'No pudimos cargar este stream ahora mismo. Intenta abrirlo directamente en la plataforma.'
-
 export default async function RedesPage() {
-  const [{ streams, latest }, nav] = await Promise.all([fetchRedesPageData(), fetchNavLists()])
+  const [nav, redesSettings] = await Promise.all([fetchNavLists(), fetchRedesSettings()])
+  const { instagram, youtube, spotify } = getRedesPageConfig({
+    instagramFeaturedPostUrl: redesSettings?.instagramFeaturedPostUrl
+  })
 
   return (
     <>
@@ -77,65 +69,123 @@ export default async function RedesPage() {
         </p>
       </section>
 
-      <section className={styles.streams} aria-label='Streams de contenido'>
-        {streams.map(stream => (
-          <article key={stream.platform} className={styles.streamCard}>
-            <div className={styles.streamHead}>
-              <h2 className={styles.streamTitle}>{stream.label}</h2>
-              <a href={stream.profileUrl} target='_blank' rel='noreferrer' className={styles.streamCta}>
-                {stream.ctaLabel}
+      <section className={styles.platform} aria-labelledby='redes-ig'>
+        <div className={styles.platformIntro}>
+          <div className={styles.platformKicker}>Instagram · @{instagram.handle}</div>
+          <h2 id='redes-ig' className={styles.platformTitle}>Análisis visual</h2>
+          <p className={styles.platformDeck}>
+            Publicaciones y reels con la lectura del día. Formato breve, denso en información, pensado para mantenerte
+            al corriente del tablero global sin salir del scroll.
+          </p>
+          <a href={instagram.profileUrl} target='_blank' rel='noreferrer' className={styles.platformCta}>
+            Ver en Instagram
+          </a>
+        </div>
+        <div className={styles.platformBody}>
+          {instagram.hasEmbed ? (
+            <div className={styles.igEmbed}>
+              <iframe
+                src={instagram.embedUrl}
+                title='Publicación destacada en Instagram'
+                scrolling='no'
+                loading='lazy'
+                allowtransparency='true'
+              />
+            </div>
+          ) : (
+            <div className={styles.platformFallback}>
+              <p>
+                En cuanto se fije una publicación destacada aparecerá embebida aquí. Mientras tanto, las últimas
+                lecturas visuales están disponibles directamente en el perfil.
+              </p>
+              <a href={instagram.profileUrl} target='_blank' rel='noreferrer' className={styles.platformFallbackCta}>
+                Abrir perfil →
               </a>
             </div>
-
-            {stream.items.length === 0 ? (
-              <p className={styles.streamEmpty}>{fallbackCopy(stream.platform)}</p>
-            ) : (
-              <ul className={styles.streamList}>
-                {stream.items.slice(0, 4).map(item => (
-                  <li key={`${stream.platform}-${item.id}`} className={styles.streamItem}>
-                    <a href={item.href} target='_blank' rel='noreferrer' className={styles.streamLink}>
-                      {item.imageUrl ? <img src={item.imageUrl} alt='' className={styles.streamThumb} loading='lazy' /> : null}
-                      <div className={styles.streamBody}>
-                        <div className={styles.streamMeta}>
-                          <span>{item.kind}</span>
-                          <span>{formatDate(item.publishedAt)}</span>
-                        </div>
-                        <h3 className={styles.streamItemTitle}>{item.title}</h3>
-                        {item.excerpt ? <p className={styles.streamExcerpt}>{item.excerpt}</p> : null}
-                      </div>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </article>
-        ))}
+          )}
+        </div>
       </section>
 
-      <section className={styles.latest} aria-label='Lo último en redes'>
-        <div className={styles.latestHead}>
-          <h2 className={styles.latestTitle}>Lo último</h2>
-          <p className={styles.latestDeck}>Un corte transversal de las publicaciones más recientes en todos los canales.</p>
+      <section className={styles.platform} aria-labelledby='redes-yt'>
+        <div className={styles.platformIntro}>
+          <div className={styles.platformKicker}>YouTube</div>
+          <h2 id='redes-yt' className={styles.platformTitle}>Investigaciones en video</h2>
+          <p className={styles.platformDeck}>
+            Análisis estructurales, entrevistas y reportajes con la profundidad que un texto no siempre puede.
+            Reproduce la última publicación o explora la cola completa de uploads.
+          </p>
+          {youtube.profileUrl ? (
+            <a href={youtube.profileUrl} target='_blank' rel='noreferrer' className={styles.platformCta}>
+              Ver canal completo
+            </a>
+          ) : null}
         </div>
-        {latest.length === 0 ? (
-          <p className={styles.latestEmpty}>Todavía no hay piezas disponibles para este panel.</p>
-        ) : (
-          <div className={styles.latestGrid}>
-            {latest.map(item => (
-              <a
-                key={`latest-${item.platform}-${item.id}`}
-                href={item.href}
-                target='_blank'
-                rel='noreferrer'
-                className={styles.latestCard}
-              >
-                <div className={styles.latestPlatform}>{item.platform}</div>
-                <h3 className={styles.latestCardTitle}>{item.title}</h3>
-                <div className={styles.latestMeta}>{formatDate(item.publishedAt)}</div>
-              </a>
-            ))}
-          </div>
-        )}
+        <div className={styles.platformBody}>
+          {youtube.hasEmbed ? (
+            <div className={styles.ytEmbed}>
+              <iframe
+                src={youtube.embedUrl}
+                title='Últimos videos en YouTube'
+                loading='lazy'
+                allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <div className={styles.platformFallback}>
+              <p>
+                Pronto se vinculará el canal de YouTube. Mientras tanto, las nuevas piezas de video se anuncian por
+                el resto de las redes.
+              </p>
+              {youtube.profileUrl ? (
+                <a href={youtube.profileUrl} target='_blank' rel='noreferrer' className={styles.platformFallbackCta}>
+                  Visitar canal →
+                </a>
+              ) : null}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className={styles.platform} aria-labelledby='redes-sp'>
+        <div className={styles.platformIntro}>
+          <div className={styles.platformKicker}>Spotify</div>
+          <h2 id='redes-sp' className={styles.platformTitle}>Podcast semanal</h2>
+          <p className={styles.platformDeck}>
+            Conversaciones extendidas sobre el nuevo orden mundial. Reproduce el último episodio o suscríbete para
+            recibir cada entrega en tu cliente preferido.
+          </p>
+          {spotify.profileUrl ? (
+            <a href={spotify.profileUrl} target='_blank' rel='noreferrer' className={styles.platformCta}>
+              Escuchar en Spotify
+            </a>
+          ) : null}
+        </div>
+        <div className={styles.platformBody}>
+          {spotify.hasEmbed ? (
+            <div className={styles.spEmbed}>
+              <iframe
+                src={spotify.embedUrl}
+                title='Reproductor de Spotify'
+                loading='lazy'
+                allow='autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture'
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <div className={styles.platformFallback}>
+              <p>
+                El reproductor se activará cuando se publique el primer episodio. Suscríbete a la cuenta para recibir
+                un aviso en cuanto salga.
+              </p>
+              {spotify.profileUrl ? (
+                <a href={spotify.profileUrl} target='_blank' rel='noreferrer' className={styles.platformFallbackCta}>
+                  Ir al perfil →
+                </a>
+              ) : null}
+            </div>
+          )}
+        </div>
       </section>
 
       <SiteFooter />

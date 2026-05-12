@@ -156,10 +156,12 @@ export default function FocoDetailClient({ data }) {
                 ))}
               </div>
 
-              <div className='indicator-block'>
-                <div className='indicator-label'>Señal HUH</div>
-                <p className='foco-signal-quote'>{data.signalQuote}</p>
-              </div>
+              {data.signalQuote ? (
+                <div className='indicator-block'>
+                  <div className='indicator-label'>Señal HUH</div>
+                  <p className='foco-signal-quote'>{data.signalQuote}</p>
+                </div>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -224,17 +226,21 @@ export default function FocoDetailClient({ data }) {
                 </div>
               </div>
               <div className='contexto-side'>
-                {data.contexto.readings?.length > 0 ? (
-                  <div className='indicator-block'>
-                    <div className='indicator-label'>Lecturas Esenciales</div>
-                    {data.contexto.readings.map((r, i) => (
+                <div className='indicator-block'>
+                  <div className='indicator-label'>Lecturas Esenciales</div>
+                  {data.contexto.readings?.length > 0 ? (
+                    data.contexto.readings.map((r, i) => (
                       <div key={i} className='reading-row'>
                         <div className='reading-title'>{r.title}</div>
                         <div className='reading-sub'>{r.subtitle}</div>
                       </div>
-                    ))}
-                  </div>
-                ) : null}
+                    ))
+                  ) : (
+                    <p className='reading-empty'>
+                      Aún no hay lecturas esenciales cargadas para este foco.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>

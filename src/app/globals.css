@@ -1821,6 +1821,8 @@ a.dispatch-card:hover .dispatch-title {
 
 .article-body p {
   margin-bottom: 22px;
+  text-align: justify;
+  hyphens: auto;
 }
 
 .article-body p:first-child::first-letter {
@@ -4427,8 +4429,8 @@ a.topic-pill {
 }
 
 .foco-detail-page .stance-observador {
-  color: #666;
-  border-color: #444;
+  color: #b388ff;
+  border-color: #b388ff;
 }
 
 .foco-detail-page .layer-tabs-sticky {
@@ -4440,13 +4442,13 @@ a.topic-pill {
 }
 
 .foco-detail-page .layer-tabs-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 48px;
+  margin: 0;
+  padding: 0;
 }
 
 .foco-detail-page .layer-tabs-row {
   display: flex;
+  justify-content: center;
 }
 
 .foco-detail-page .layer-tab {
@@ -4454,17 +4456,24 @@ a.topic-pill {
   letter-spacing: 2.5px;
   text-transform: uppercase;
   font-weight: 600;
-  padding: 14px 24px;
+  padding: 13px 0;
   color: var(--muted);
   cursor: pointer;
   transition: color 0.2s;
   border-right: 1px solid var(--border);
+  border-left: 1px solid var(--border);
   position: relative;
   background: none;
   border-top: none;
   border-bottom: none;
-  border-left: none;
   font-family: var(--font-body);
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.foco-detail-page .layer-tab + .layer-tab {
+  border-left: none;
 }
 
 .foco-detail-page .layer-tab:hover {
@@ -4741,6 +4750,8 @@ a.topic-pill {
 
 .foco-detail-page .contexto-body p {
   margin-bottom: 20px;
+  text-align: justify;
+  hyphens: auto;
 }
 
 .foco-detail-page .contexto-body h2 {
@@ -4750,6 +4761,12 @@ a.topic-pill {
   margin: 36px 0 14px;
   padding-top: 28px;
   border-top: 1px solid var(--border);
+}
+
+.foco-detail-page .contexto-body > h2:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .foco-detail-page .contexto-body h3 {
@@ -4810,6 +4827,14 @@ a.topic-pill {
   font-weight: 600;
   color: var(--text);
   margin-bottom: 3px;
+}
+
+.foco-detail-page .reading-empty {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+  padding-top: 4px;
 }
 
 .foco-detail-page .reading-sub {
@@ -4921,26 +4946,16 @@ a.topic-pill {
     font-size: clamp(40px, 6vw, 56px);
   }
 
-  .foco-detail-page .layer-tabs-inner,
   .foco-detail-page .page-body {
     padding: 0 24px;
   }
 
-  .foco-detail-page .layer-tabs-row {
-    overflow-x: auto;
-    overflow-y: hidden;
-    flex-wrap: nowrap;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .foco-detail-page .layer-tabs-row::-webkit-scrollbar {
-    display: none;
+  .foco-detail-page .layer-tabs-inner {
+    padding: 0;
   }
 
   .foco-detail-page .layer-tab {
-    flex: 0 0 auto;
-    padding: 14px 18px;
+    padding: 13px 8px;
     font-size: 9px;
     letter-spacing: 2px;
   }
@@ -5004,13 +5019,16 @@ a.topic-pill {
     padding: 18px 16px;
   }
 
-  .foco-detail-page .layer-tabs-inner,
   .foco-detail-page .page-body {
     padding: 0 16px;
   }
 
+  .foco-detail-page .layer-tabs-inner {
+    padding: 0;
+  }
+
   .foco-detail-page .layer-tab {
-    padding: 12px 14px;
+    padding: 12px 4px;
     font-size: 8px;
     letter-spacing: 1.5px;
   }

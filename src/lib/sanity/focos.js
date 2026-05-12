@@ -335,7 +335,7 @@ export function mapSanityFocoToDetail(doc, articleRows) {
     signalQuote:
       typeof doc.signalQuote === 'string' && doc.signalQuote.trim()
         ? doc.signalQuote.trim()
-        : 'Señal editorial pendiente en Sanity.',
+        : '',
     timeline: mapSanityTimeline(doc.timeline),
     archivo: mapArticlesToArchivo(articleRows),
     contexto: {

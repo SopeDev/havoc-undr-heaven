@@ -435,3 +435,9 @@ export const nextNewsletterIssueForDispatchQuery = groq`
     }
   }
 `
+
+export const redesSettingsQuery = groq`
+  *[_type == "redesSettings" && _id == "redesSettings"][0]{
+    instagramFeaturedPostUrl
+  }
+`
