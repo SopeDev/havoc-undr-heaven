@@ -138,6 +138,50 @@ nav {
   border-bottom: none;
 }
 
+.nav-dropdown .nav-dropdown-item--soon {
+  display: block;
+  padding: 12px 18px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #666;
+  border-bottom: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.type-item--soon,
+.section-tab--soon {
+  color: var(--muted);
+  cursor: default;
+  pointer-events: none;
+}
+
+.type-item--soon:hover,
+.section-tab--soon:hover {
+  color: var(--muted);
+}
+
+.type-item--soon.active::after,
+.section-tab--soon.active::after {
+  display: none;
+}
+
+.nav-soon-label {
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-transform: lowercase;
+  color: var(--muted);
+  margin-left: 4px;
+}
+
+.footer-link-soon {
+  color: var(--muted);
+  cursor: default;
+  pointer-events: none;
+  font-size: inherit;
+}
+
 .nav-search-wrap {
   display: flex;
   align-items: center;

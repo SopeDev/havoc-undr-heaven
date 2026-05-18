@@ -72,7 +72,7 @@ export default defineType({
       name: 'titleLines',
       title: 'Título en el hero (líneas opcionales)',
       description:
-        'Si lo completás, cada ítem es una línea del titular grande (como en el mock). Si está vacío, el sitio puede mostrar solo el campo Título.',
+        'Si lo completas, cada ítem es una línea del titular grande (como en el mock). Si está vacío, el sitio puede mostrar solo el campo Título.',
       type: 'array',
       of: [{ type: 'string' }]
     }),
@@ -80,16 +80,16 @@ export default defineType({
       name: 'tags',
       title: 'Temas / etiquetas',
       description:
-        'Referencias a los mismos tags que usás en artículos. Un artículo aparece en el Archivo de este foco si comparte al menos uno de estos tags.',
+        'Referencias a los mismos tags que usas en artículos. Un artículo aparece en el Archivo de este foco si comparte al menos uno de estos tags.',
       type: 'array',
       of: [{ type: 'reference', to: [{ type: 'tag' }] }],
-      validation: Rule => Rule.min(1).error('Agregá al menos un tag para enlazar artículos al foco.')
+      validation: Rule => Rule.min(1).error('Agrega al menos un tag para enlazar artículos al foco.')
     }),
     defineField({
       name: 'regionLineOverride',
       title: 'Línea de región (opcional)',
       description:
-        'Texto bajo el título (ej. Indo-Pacífico · China). Si lo dejás vacío, el sitio puede armar la línea a partir de los nombres de los tags.',
+        'Texto bajo el título (ej. Indo-Pacífico · China). Si lo dejas vacío, el sitio puede armar la línea a partir de los nombres de los tags.',
       type: 'string'
     }),
     defineField({

@@ -11,6 +11,7 @@ import { fetchTemaPageData } from '../../../lib/sanity/temas'
 import { fetchFocosSidebarByUpdated } from '../../../lib/sanity/focos'
 import { fetchSpotlightSidebarArticles } from '../../../lib/sanity/homePageData'
 import { fetchNavLists } from '../../../lib/sanity/navigation'
+import TableroGlobalNavLabel from '../../../components/TableroGlobalNavLabel/TableroGlobalNavLabel'
 
 export const revalidate = 60
 
@@ -71,9 +72,7 @@ export default async function TemaPage({ params }) {
         <Link href='/focos' className='type-item'>
           Focos de Tensión
         </Link>
-        <Link href='/tablero' className='type-item'>
-          Tablero Global
-        </Link>
+        <TableroGlobalNavLabel />
       </div>
 
       <div className='region-bar region-bar--tema'>

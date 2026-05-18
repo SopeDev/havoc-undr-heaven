@@ -92,17 +92,6 @@ export async function fetchHomePageData() {
 
   sidebarArticles = capSpotlightRows(sidebarArticles)
 
-  if (process.env.NODE_ENV === 'development') {
-    console.info('[havoc/home][server] En el Spotlight — check this terminal (not the browser DevTools)', {
-      sanityConfigured: isSanityConfigured(),
-      peekDocsCount: peekDocs?.length ?? 0,
-      spotlightPoolCount: spotlightFromPool?.length ?? 0,
-      finalSidebarCount: sidebarArticles.length,
-      usedPeekFallback,
-      umamiRanking: isUmamiAnalyticsConfigured()
-    })
-  }
-
   const categories = nav.categories
   const tags = nav.tags
 

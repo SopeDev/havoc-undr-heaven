@@ -12,6 +12,7 @@ import { fetchArticlesByCategorySlugLimited, fetchCategoryBySlug } from '../../.
 import { fetchNewsletterIssuesForWeb } from '../../../lib/sanity/newsletterIssues'
 import { fetchFocosSidebarByUpdated } from '../../../lib/sanity/focos'
 import { fetchNavLists } from '../../../lib/sanity/navigation'
+import TableroGlobalNavLabel from '../../../components/TableroGlobalNavLabel/TableroGlobalNavLabel'
 import { categoryHrefSlug, formatArticleDate } from '../../../lib/sanity/articleView'
 import { urlForCardImage } from '../../../lib/sanity/image'
 import styles from './page.module.css'
@@ -44,13 +45,13 @@ function subscribeStatusNotice(status) {
   if (status === NEWSLETTER_SUBSCRIBE_STATUSES.INVALID) {
     return {
       tone: 'warn',
-      text: 'El enlace de confirmación no es válido o venció. Podés volver a suscribirte con tu email.'
+      text: 'El enlace de confirmación no es válido o venció. Puedes volver a suscribirte con tu email.'
     }
   }
   if (status === NEWSLETTER_SUBSCRIBE_STATUSES.ERROR) {
     return {
       tone: 'error',
-      text: 'No pudimos confirmar tu suscripción en este intento. Probá nuevamente en unos minutos.'
+      text: 'No pudimos confirmar tu suscripción en este intento. Prueba nuevamente en unos minutos.'
     }
   }
   return null
@@ -283,9 +284,7 @@ export default async function NewsletterArchivePage({ searchParams }) {
         <Link href='/focos' className='section-tab'>
           Focos de Tensión
         </Link>
-        <Link href='/tablero' className='section-tab'>
-          Tablero Global
-        </Link>
+        <TableroGlobalNavLabel variant='section-tab' />
       </div>
 
       <div style={{ background: 'var(--white)', borderBottom: '1px solid var(--border)' }}>
@@ -335,7 +334,7 @@ export default async function NewsletterArchivePage({ searchParams }) {
 
           {showTemaEmptyMessage ? (
             <p className='cat-feed-empty' style={{ padding: '1.5rem 0', color: 'var(--muted, #666)' }}>
-              No hay artículos con este tema en esta categoría. Probá otro filtro o{' '}
+              No hay artículos con este tema en esta categoría. Prueba otro filtro o{' '}
               <Link href={`/temas/${temaSlug}`}>ver todo el archivo del tema</Link>.
             </p>
           ) : null}

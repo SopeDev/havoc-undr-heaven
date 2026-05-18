@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import TableroGlobalNavLabel from '../TableroGlobalNavLabel/TableroGlobalNavLabel'
 
 export default function SiteFooter() {
   return (
@@ -29,7 +30,7 @@ export default function SiteFooter() {
               <Link href='/focos'>Focos de Tensión</Link>
             </li>
             <li>
-              <Link href='/tablero'>Tablero Global</Link>
+              <TableroGlobalNavLabel variant='footer' />
             </li>
           </ul>
         </div>
@@ -41,10 +42,7 @@ export default function SiteFooter() {
               <Link href='/nosotros'>Nosotros</Link>
             </li>
             <li>
-              <Link href='/categoria/redes'>Redes</Link>
-            </li>
-            <li>
-              <a href='#'>Contacto</a>
+              <Link href='/redes'>Redes</Link>
             </li>
             <li>
               <Link href='/categoria/newsletter'>Suscribirse</Link>

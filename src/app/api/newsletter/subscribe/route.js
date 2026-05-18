@@ -62,18 +62,14 @@ export async function POST(req) {
       return isResendContactSubscribed(retry)
     }
 
-    const verified = await verifySubscribed()
-    if (!verified) {
-      console.warn('[newsletter/subscribe] Resend GET did not confirm subscription after upsert', email)
-    }
+    await verifySubscribed()
 
     return NextResponse.json({
       ok: true,
       status: NEWSLETTER_SUBSCRIBE_STATUSES.SUBSCRIBED,
       message: 'Listo, ya estás suscripto al newsletter.'
     })
-  } catch (err) {
-    console.error('[newsletter/subscribe]', err instanceof Error ? err.message : err)
+  } catch {
     return NextResponse.json({ ok: false, error: 'subscribe_failed' }, { status: 502 })
   }
 }

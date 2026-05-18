@@ -98,14 +98,6 @@ export async function POST(req) {
     messageId: sendRes?.data?.id || null
   })
 
-  console.info('[newsletter.send-test] sent', {
-    issueId: issue._id,
-    issueTitle: issue.title || 'HAVOC DISPATCH',
-    to,
-    dispatchKey: resolvedDispatchKey,
-    messageId: sendRes?.data?.id || null
-  })
-
   return NextResponse.json({
     ok: true,
     to,

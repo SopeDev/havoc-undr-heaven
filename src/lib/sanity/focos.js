@@ -206,7 +206,7 @@ function defaultActorsFallback() {
   return [
     {
       name: 'Actores regionales',
-      role: 'Completá actores en Sanity para este foco.',
+      role: 'Completa actores en Sanity para este foco.',
       stanceClass: 'stance-observador',
       stanceLabel: stanceLabelWithPrefix(STANCE_UI.observer.label)
     }

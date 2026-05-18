@@ -23,6 +23,7 @@ import { mergeCategoriaPage } from '../../../lib/sanity/categoriaPageData'
 import { fetchSpotlightSidebarArticles } from '../../../lib/sanity/homePageData'
 import { fetchFocosSidebarByUpdated } from '../../../lib/sanity/focos'
 import { fetchNavLists } from '../../../lib/sanity/navigation'
+import TableroGlobalNavLabel from '../../../components/TableroGlobalNavLabel/TableroGlobalNavLabel'
 
 export const revalidate = 60
 
@@ -136,9 +137,7 @@ export default async function CategoriaPage({ params, searchParams }) {
         <Link href='/focos' className='section-tab'>
           Focos de Tensión
         </Link>
-        <Link href='/tablero' className='section-tab'>
-          Tablero Global
-        </Link>
+        <TableroGlobalNavLabel variant='section-tab' />
       </div>
 
       <div style={{ background: 'var(--white)', borderBottom: '1px solid var(--border)' }}>
@@ -186,7 +185,7 @@ export default async function CategoriaPage({ params, searchParams }) {
             <p className='cat-feed-empty' style={{ padding: '1.5rem 0', color: 'var(--muted, #666)' }}>
               {tagFilterActive && temaSlug ? (
                 <>
-                  No hay artículos con este tema en esta categoría. Probá otro filtro o{' '}
+                  No hay artículos con este tema en esta categoría. Prueba otro filtro o{' '}
                   <Link href={`/temas/${temaSlug}`}>ver todo el archivo del tema</Link>.
                 </>
               ) : (

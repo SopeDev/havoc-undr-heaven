@@ -9,6 +9,7 @@ import {
   SESSION_NEWSLETTER_MODAL_FLAG
 } from '../../lib/newsletter/subscriberLocalStorage'
 import NewsletterSignupModal from '../NewsletterSignupModal/NewsletterSignupModal'
+import TableroGlobalNavLabel from '../TableroGlobalNavLabel/TableroGlobalNavLabel'
 
 const NAV_ITEMS = [
   { id: 'inicio', label: 'Inicio', href: '/' },
@@ -47,10 +48,9 @@ export default function SiteHeader() {
 
   useEffect(() => {
     try {
-      if (sessionStorage.getItem(SESSION_NEWSLETTER_MODAL_FLAG) === '1') {
-        sessionStorage.removeItem(SESSION_NEWSLETTER_MODAL_FLAG)
-        setIsNewsletterModalOpen(true)
-      }
+      if (sessionStorage.getItem(SESSION_NEWSLETTER_MODAL_FLAG) !== '1') return
+      sessionStorage.removeItem(SESSION_NEWSLETTER_MODAL_FLAG)
+      queueMicrotask(() => setIsNewsletterModalOpen(true))
     } catch {
       // ignore
     }
@@ -107,7 +107,7 @@ export default function SiteHeader() {
             </a>
             <div className='nav-dropdown'>
               <Link href='/focos'>Focos de Tensión</Link>
-              <a href='/tablero'>Tablero Global</a>
+              <TableroGlobalNavLabel variant='nav-dropdown' />
             </div>
           </li>
         </ul>

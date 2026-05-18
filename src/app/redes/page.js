@@ -4,6 +4,7 @@ import SiteHeader from '../../components/SiteHeader/SiteHeader'
 import { fetchNavLists } from '../../lib/sanity/navigation'
 import { fetchRedesSettings } from '../../lib/sanity/redesSettings'
 import { getRedesPageConfig } from '../../lib/social'
+import TableroGlobalNavLabel from '../../components/TableroGlobalNavLabel/TableroGlobalNavLabel'
 import styles from './Redes.module.css'
 
 export const revalidate = 300
@@ -43,7 +44,7 @@ export default async function RedesPage() {
           ))}
         <Link href='/categoria/newsletter' className='type-item'>Newsletter</Link>
         <Link href='/focos' className='type-item'>Focos de Tensión</Link>
-        <Link href='/tablero' className='type-item'>Tablero Global</Link>
+        <TableroGlobalNavLabel />
 
         <form className='type-bar-search' action='/buscar' method='get'>
           <input type='text' name='q' placeholder='Buscar' />

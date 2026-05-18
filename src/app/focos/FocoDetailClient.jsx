@@ -129,7 +129,7 @@ export default function FocoDetailClient({ data }) {
                   ))
                 ) : (
                   <p style={{ color: 'var(--mid)', fontSize: 14 }}>
-                    Agregá entradas de línea de tiempo en Sanity para este foco.
+                    Agrega entradas de línea de tiempo en Sanity para este foco.
                   </p>
                 )}
               </div>

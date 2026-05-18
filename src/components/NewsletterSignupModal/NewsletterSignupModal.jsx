@@ -37,8 +37,8 @@ export default function NewsletterSignupModal({ isOpen, onClose }) {
 
         <NewsletterSignup
           variant='modal'
-          title='Suscribite a HAVOC DISPATCH'
-          description='Recibí análisis geopolítico directo a tu correo cada semana.'
+          title='Suscríbete a HAVOC DISPATCH'
+          description='Recibe análisis geopolítico directo a tu correo cada semana.'
         />
       </div>
     </div>

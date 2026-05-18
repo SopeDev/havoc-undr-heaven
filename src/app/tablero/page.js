@@ -2,6 +2,12 @@ import Link from 'next/link'
 import SiteHeader from '../../components/SiteHeader/SiteHeader'
 import SiteFooter from '../../components/SiteFooter/SiteFooter'
 
+export const metadata = {
+  title: 'Tablero Global',
+  description: 'Módulo en construcción.',
+  robots: { index: false, follow: false }
+}
+
 export default function TableroPage() {
   return (
     <>

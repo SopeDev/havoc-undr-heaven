@@ -5,7 +5,7 @@ import SiteHeader from '../SiteHeader/SiteHeader'
 import SiteFooter from '../SiteFooter/SiteFooter'
 import NewsletterSidebarBlock from '../NewsletterSidebarBlock/NewsletterSidebarBlock'
 import NewsletterArticleLink from '../NewsletterArticleLink/NewsletterArticleLink'
-import HomeSpotlightDebug from './HomeSpotlightDebug'
+import TableroGlobalNavLabel from '../TableroGlobalNavLabel/TableroGlobalNavLabel'
 
 /**
  * @param {{
@@ -29,16 +29,9 @@ export default function Home({
   dispatchItems,
   focoRows
 }) {
-  const spotlightTitles = sidebarArticles.map(s => s.title).filter(Boolean)
-  const showSpotlightDevLog = process.env.NODE_ENV === 'development'
-
   return (
     <>
       <SiteHeader />
-
-      {showSpotlightDevLog ? (
-        <HomeSpotlightDebug count={sidebarArticles.length} titles={spotlightTitles} />
-      ) : null}
 
       <div className='type-bar'>
         <Link href='/' className='type-item active'>Todo</Link>
@@ -51,7 +44,7 @@ export default function Home({
           ))}
         <Link href='/categoria/newsletter' className='type-item'>Newsletter</Link>
         <Link href='/focos' className='type-item'>Focos de Tensión</Link>
-        <Link href='/tablero' className='type-item'>Tablero Global</Link>
+        <TableroGlobalNavLabel />
 
         <form className='type-bar-search' action='/buscar' method='get'>
           <input type='text' name='q' placeholder='Buscar' />

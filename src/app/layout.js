@@ -1,5 +1,9 @@
 import { Bebas_Neue, Inter, Oswald, Playfair_Display } from 'next/font/google'
 import './globals.css'
+import { getSiteUrl } from '../lib/siteUrl'
+
+const siteUrl = getSiteUrl()
+const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID?.trim()
 
 const fontDisplay = Bebas_Neue({
   weight: '400',
@@ -32,8 +36,27 @@ const fontCond = Oswald({
 const fontVariables = [fontDisplay.variable, fontSerif.variable, fontBody.variable, fontCond.variable].join(' ')
 
 export const metadata = {
-  title: 'HAVOC UNDR HEAVEN',
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: 'HAVOC UNDR HEAVEN',
+    template: '%s — HAVOC UNDR HEAVEN'
+  },
   description: 'Publicaciones de análisis geopolítico',
+  openGraph: {
+    type: 'website',
+    locale: 'es_AR',
+    siteName: 'HAVOC UNDR HEAVEN',
+    title: 'HAVOC UNDR HEAVEN',
+    description: 'Publicaciones de análisis geopolítico'
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'HAVOC UNDR HEAVEN',
+    description: 'Publicaciones de análisis geopolítico'
+  },
+  alternates: {
+    canonical: '/'
+  }
 }
 
 export const viewport = {
@@ -45,11 +68,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang='es' className={fontVariables} suppressHydrationWarning>
       <head>
-        <script
-          defer
-          src='https://cloud.umami.is/script.js'
-          data-website-id='c515dd5f-530b-4dbb-b339-2e3bcf5040d7'
-        />
+        {umamiWebsiteId ? (
+          <script defer src='https://cloud.umami.is/script.js' data-website-id={umamiWebsiteId} />
+        ) : null}
       </head>
       <body suppressHydrationWarning>{children}</body>
     </html>
