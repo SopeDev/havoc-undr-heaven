@@ -139,7 +139,10 @@ nav {
 }
 
 .nav-dropdown .nav-dropdown-item--soon {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
   padding: 12px 18px;
   font-size: 10px;
   letter-spacing: 2px;
@@ -152,6 +155,11 @@ nav {
 
 .type-item--soon,
 .section-tab--soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   color: var(--muted);
   cursor: default;
   pointer-events: none;
@@ -175,11 +183,30 @@ nav {
   margin-left: 4px;
 }
 
-.footer-link-soon {
-  color: var(--muted);
+.type-item--soon .nav-soon-title,
+.section-tab--soon .nav-soon-title {
+  display: block;
+  line-height: 1.2;
+}
+
+.type-item--soon .nav-soon-label,
+.section-tab--soon .nav-soon-label,
+.nav-dropdown .nav-dropdown-item--soon .nav-soon-label,
+.footer-links .footer-link-soon .nav-soon-label {
+  display: block;
+  margin-left: 0;
+  line-height: 1.2;
+}
+
+.footer-links .footer-link-soon {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 13px;
+  color: #AAA;
   cursor: default;
   pointer-events: none;
-  font-size: inherit;
 }
 
 .nav-search-wrap {
